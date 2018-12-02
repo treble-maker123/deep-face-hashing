@@ -1,6 +1,7 @@
 import os
 from time import time, strftime
 from datetime import datetime
+from utils import *
 
 class Logger(object):
     '''
@@ -8,11 +9,13 @@ class Logger(object):
     '''
     def __init__(self, **kwargs):
         self.print_to_stdout = kwargs.get("print_to_std", True)
+        self._write_to_file = kwargs.get("write_to_file", False)
         current_dir = os.getcwd()
         self.output_path = kwargs.get("output_path",
                                       current_dir + "/logs/{}.txt"
                                         .format(self._get_time()))
-        self._write_to_file = kwargs.get("write_to_file", False)
+        if self._write_to_file:
+            mkdir(current_dir + "/logs")
 
     def __enter__(self):
         if self._write_to_file:

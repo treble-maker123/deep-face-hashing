@@ -23,7 +23,8 @@ class FaceScrubDataset(Dataset):
     Five images per person set aside for test,
         7,022,500
     '''
-    def __init__(self, type="comparison", mode="train", transform=None):
+    def __init__(self, hash_dim=48,
+                 type="comparison", mode="train", transform=None):
         if mode not in ["train", "val", "test"]:
             raise Exception("Invalid dataset mode")
         if type not in ["hash_label", "comparison"]:
@@ -33,15 +34,14 @@ class FaceScrubDataset(Dataset):
         self.type = type
         self.names = lsdir(DATA_DIR)
         self.img_paths = self._get_all_img_paths()
-        self.hash = hashlib.sha1()
         self.transform = transform
+        self.hash_dim = hash_dim
 
     def __len__(self):
         if self.type == "comparison":
             return len(self.img_paths) ** 2
         elif self.type == "hash_label":
-            return 64
-            # return len(self.img_paths)
+            return len(self.img_paths)
 
     def __getitem__(self, index):
         if self.type == "comparison":
@@ -74,7 +74,7 @@ class FaceScrubDataset(Dataset):
         img_path = self.img_paths[index]
         image = self._get_img_from_path(img_path)
         hash_code = self._get_hashed_label(img_path.split("/")[2])
-        assert hash_code.size == 48, "Invalid hash_code size"
+        assert hash_code.size == self.hash_dim, "Invalid hash_code size"
         return (image, hash_code)
 
     def _get_hashed_label(self, name):
@@ -82,8 +82,8 @@ class FaceScrubDataset(Dataset):
         Turn a strig into binary hash code.
         '''
         encoded = str.encode(name)
-        self.hash.update(encoded)
-        hash_code = list(bin(int(self.hash.hexdigest(), 16))[2:])[:48]
+        digest = hashlib.md5(encoded).hexdigest()
+        hash_code = list(bin(int(digest, 16))[2:])[:self.hash_dim]
         return np.array(hash_code, dtype="int")
 
     def _get_pair_from_index(self, index):

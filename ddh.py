@@ -42,7 +42,7 @@ class DiscriminativeDeepHashing(nn.Module):
     # https://arxiv.org/pdf/1504.03410.pdf
     # ==========================================================================
     '''
-    def __init__(self):
+    def __init__(self, hash_dim=48):
         super(DiscriminativeDeepHashing, self).__init__()
         self.cn1 = nn.Conv2d(3, 20, kernel_size=3)
         self.bn1 = nn.BatchNorm2d(20)
@@ -60,10 +60,10 @@ class DiscriminativeDeepHashing(nn.Module):
         self.bn4 = nn.BatchNorm2d(80)
         self.mg1 = Merge()
 
-        self.fc1 = nn.Linear(860, 480)
-        self.de1 = DivideEncode(480, 10)
+        self.fc1 = nn.Linear(860, hash_dim*10)
+        self.de1 = DivideEncode(hash_dim*10, 10)
 
-        self.fc2 = nn.Linear(48, 48)
+        self.fc2 = nn.Linear(hash_dim, hash_dim)
 
     def forward(self, X):
         l1 = self.mp1(F.relu(self.bn1(self.cn1(X))))
@@ -73,7 +73,6 @@ class DiscriminativeDeepHashing(nn.Module):
         # merge of output from layer 3 and 4
         l5 = self.mg1(l3, l4)
         # face feature layer
-        # set_trace()
         l6 = F.relu(self.fc1(l5))
         # slice layer
         l7 = self.de1(l6)

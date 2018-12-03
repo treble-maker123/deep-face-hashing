@@ -27,3 +27,11 @@ Run `source activate cs670project` to activate project conda environment.
 ## Miscellaneous Notes
 
 - Location of dataset https://github.com/faceteam/facescrub.git. **NOTE:** Need Python 2.7 to run download.py.
+
+## Instructions
+
+1. Download miniconda and pip,
+2. Install the packages noted above,
+3. `git clone https://github.com/faceteam/facescrub.git` into the same level as the project's path (see file structure above),
+4. Run `python download.py` with Python 2.7 to download the FaceScrub images,
+5. Run `python utils.py` to preprocess the images and move them into the project's ./data folder,

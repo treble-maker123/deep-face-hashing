@@ -32,7 +32,7 @@ else:
     device = torch.device("cpu")
 
 
-num_epochs = 1000
+num_epochs = 2100
 
 optimizer_params = {
     "lr": 1e-3,
@@ -68,9 +68,9 @@ data_test = FaceScrubDataset(type="hash_label",
 
 # setting up the data loader
 batch_size = {
-    "train": 512,
-    "val": 512,
-    "test": 512
+    "train": 256,
+    "val": 256,
+    "test": 256
 }
 
 loader_params = {
@@ -96,6 +96,7 @@ optimizer = optim.Adam(model.parameters(), **optimizer_params)
 run_id = uuid.uuid4().hex.upper()[0:6]
 now = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
 file_name = now + "+" + run_id
+mkdir(os.getcwd() + "/models")
 checkpoint_path = os.getcwd() + "/models/{}_best_weights.pt" \
                     .format(file_name)
 

@@ -94,7 +94,7 @@ model = model.to(device=device)
 optimizer = optim.Adam(model.parameters(), **optimizer_params)
 
 run_id = uuid.uuid4().hex.upper()[0:6]
-now = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
+now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 file_name = now + "+" + run_id
 mkdir(os.getcwd() + "/models")
 checkpoint_path = os.getcwd() + "/models/{}_best_weights.pt" \

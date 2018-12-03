@@ -106,5 +106,3 @@ dependencies:
   - pip:
     - opencv-python==3.4.4.19
     - torch==0.4.1.post2
-prefix: /home/ubuntu/miniconda2/envs/cs670project
-

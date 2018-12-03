@@ -11,9 +11,10 @@ class Logger(object):
         self.print_to_stdout = kwargs.get("print_to_std", True)
         self._write_to_file = kwargs.get("write_to_file", False)
         current_dir = os.getcwd()
+        file_name = kwargs.get("file_name", self._get_time())
         self.output_path = kwargs.get("output_path",
                                       current_dir + "/logs/{}.txt"
-                                        .format(self._get_time()))
+                                        .format(file_name))
         if self._write_to_file:
             mkdir(current_dir + "/logs")
 

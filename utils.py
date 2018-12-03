@@ -1,10 +1,11 @@
 import os
 import cv2
+import torch
 import numpy as np
 from time import time
 from multiprocessing import Pool, cpu_count
 from functools import reduce
-from pdb import set_trace as st
+from pdb import set_trace
 
 # ==============================================================================
 # NOTE: Run all of the code from the ./code directory!
@@ -110,9 +111,36 @@ def get_facescrub_path(name):
 def get_data_path(name):
     return DATA_DIR + "/{}".format(name)
 
+def calc_map(input, gt, dim=1):
+    '''
+    Calculate the mean average precision (MAP) for each input based on the
+    ground truth.
+    '''
+    assert type(input) is torch.Tensor, \
+        "Invalid input data type, expecting a Tensor."
+    assert type(gt) is torch.Tensor, \
+        "Invalid ground truth data type, expecting a Tensor."
+    assert input.shape == gt.shape, \
+        "Shape mismatch between input and ground truth."
+
+    input, gt = input.data.float() > 0, gt.data.float() > 0
+    input_len, num_dims = len(input), input.shape[dim]
+    comp = (input == gt).float()
+    idx = torch.stack([torch.arange(num_dims) + 1] * input_len).float()
+    result = torch.zeros_like(input, dtype=torch.float)
+    for i in range(num_dims):
+        result[:, i] = comp[:, :i+1].sum(dim=1)
+    ap = ((result * comp) / idx).sum(dim=1, keepdim=True)
+    total = comp.sum(dim=1, keepdim=True)
+    map = ap / total
+    # set nan to 0 when total is 0
+    map[map != map] = 0
+    return map
+
 if __name__ == "__main__":
-    preprocess()
-    print("There are {} images in ./facescrub/download/*/face folder."
-            .format(_count_before_imgs()))
-    print("There are {} images in ./code/data/*."
-            .format(_count_after_imgs()))
+    # preprocess()
+    # print("There are {} images in ./facescrub/download/*/face folder."
+    #         .format(_count_before_imgs()))
+    # print("There are {} images in ./code/data/*."
+    #         .format(_count_after_imgs()))
+    pass

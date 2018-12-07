@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from dataset import *
 from hamming_dist import *
 from calc_map import *
+from calc_pre_rec import *
 
 class DiscriminativeDeepHashing(nn.Module):
     '''
@@ -140,8 +141,14 @@ class DivideEncode(nn.Module):
 # ==========================
 # Hyperparameters
 # ==========================
+
+# the number of hash bits in the output
 HASH_DIM = 48
+# the distance to use for calculating precision/recall
+HAMM_RADIUS = 2
+# number of epochs to train
 NUM_EPOCHS = 5
+# optimizer parameters
 OPTIM_PARAMS = {
     "lr": 1e-2,
     "weight_decay": 0.0
@@ -220,7 +227,7 @@ def train(model, loader, optim, logger, **kwargs):
     Train for one epoch.
     '''
     device = kwargs.get("device", torch.device("cpu"))
-    print_iter = kwargs.get("print_iter", 20)
+    print_iter = kwargs.get("print_iter", 40)
 
     model.to(device=device)
     # set model to train mode
@@ -249,7 +256,7 @@ def train(model, loader, optim, logger, **kwargs):
 
         if (num_iter+1) % print_iter == 0:
             logger.write(
-                "\tIter {}".format(num_iter+1) +
+                "iter {}".format(num_iter+1) +
                 "- quant loss: {:.8f}, score loss: {:.8f}"
                     .format(quant_loss, score_loss))
 
@@ -301,20 +308,31 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
         # activating with sign function
         bin_gallery_codes = gallery_codes > 0
         bin_test_codes = test_codes > 0
+        # set the variables to CPU and array
+        bin_gallery_codes = bin_gallery_codes.cpu().numpy()
+        bin_test_codes = bin_test_codes.cpu().numpy()
 
         # reshape labels so gallery and test match shape
         gallery_label = gallery_label.unsqueeze(1)
         test_label = test_label.unsqueeze(1)
         gallery_label = gallery_label.repeat(1, test_label.shape[0])
         test_label = test_label.repeat(1, gallery_label.shape[0])
+        # set the variables to CPU and array
+        gallery_label = gallery_label.cpu().numpy()
+        test_label = test_label.cpu().numpy()
 
         # how many matches between train and test
-        label_match = gallery_label == test_label.t()
+        label_match = (gallery_label == test_label.T).astype("int8")
 
         # hamming distance between the binary codes
-        dist = hamming_dist(bin_gallery_codes.cpu().numpy(),
-                            bin_test_codes.cpu().numpy())
+        dist = hamming_dist(bin_gallery_codes, bin_test_codes)
         rankings = np.argsort(dist, axis=0)
-        mean_ap = calc_map(label_match.cpu().numpy(), rankings, top_k=top_k)
 
-    return mean_ap
+        # mean average precision
+        mean_ap = calc_map(label_match, rankings, top_k=top_k)
+
+        # calculate precision and recall curve
+        avg_pre, avg_rec, avg_hmean, pre_curve, rec_curve = \
+            calc_pre_rec(dist, label_match, HAMM_RADIUS)
+
+    return avg_pre, avg_rec, avg_hmean, pre_curve, rec_curve, mean_ap

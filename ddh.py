@@ -141,7 +141,7 @@ class DivideEncode(nn.Module):
 # Hyperparameters
 # ==========================
 HASH_DIM = 48
-NUM_EPOCHS = 500
+NUM_EPOCHS = 40
 OPTIM_PARAMS = {
     "lr": 1e-2,
     "weight_decay": 0.0

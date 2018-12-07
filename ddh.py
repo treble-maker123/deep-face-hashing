@@ -141,7 +141,7 @@ class DivideEncode(nn.Module):
 # Hyperparameters
 # ==========================
 HASH_DIM = 48
-NUM_EPOCHS = 10
+NUM_EPOCHS = 2000
 OPTIM_PARAMS = {
     "lr": 1e-2,
     "weight_decay": 0.0
@@ -218,7 +218,7 @@ def train(model, loader, optim, logger, **kwargs):
     Train for one epoch.
     '''
     device = kwargs.get("device", torch.device("cpu"))
-    print_iter = kwargs.get("print_iter", 1)
+    print_iter = kwargs.get("print_iter", 20)
 
     model.to(device=device)
     # set model to train mode
@@ -270,12 +270,12 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
         for X, y in loader_gallery:
             _, gcodes = model(X.to(device=device))
 
-            if data[0] == None:
+            if data[0] is None:
                 data[0] = gcodes
             else:
                 data[0] = torch.cat((data[0], gcodes))
 
-            if data[1] == None:
+            if data[1] is None:
                 data[1] = y
             else:
                 data[1] = torch.cat((data[1], y))
@@ -284,12 +284,12 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
         for X, y in loader_test:
             _, gcodes = model(X.to(device=device))
 
-            if data[2] == None:
+            if data[2] is None:
                 data[2] = gcodes
             else:
                 data[2] = torch.cat((data[2], gcodes))
 
-            if data[3] == None:
+            if data[3] is None:
                 data[3] = y
             else:
                 data[3] = torch.cat((data[3], y))

@@ -309,8 +309,9 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
         label_match = gallery_label == test_label.t()
 
         # hamming distance between the binary codes
-        dist = hamming_dist(bin_gallery_codes.numpy(), bin_test_codes.numpy())
+        dist = hamming_dist(bin_gallery_codes.cpu().numpy(),
+                            bin_test_codes.cpu().numpy())
         rankings = np.argsort(dist, axis=0)
-        mean_ap = calc_map(label_match.numpy(), rankings, top_k=top_k)
+        mean_ap = calc_map(label_match.cpu().numpy(), rankings, top_k=top_k)
 
     return mean_ap

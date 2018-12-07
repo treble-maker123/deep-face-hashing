@@ -65,7 +65,7 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
                                        device=device)
 
         mean_ap = predict(model, train_set, train_label,
-                          val_set, val_label, logger, device=device)
+                          val_set, val_label, logger)
 
         logger.write("Epoch {} - ".format(epoch+1) +
                      "quant loss: {:.8f}, score_loss: {:.8f}, "

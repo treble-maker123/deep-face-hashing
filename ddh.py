@@ -273,10 +273,11 @@ def train(model, loader, optim, logger, **kwargs):
 
 def predict(model, train_set, train_label,
             test_set, test_label, logger, **kwargs):
-    device = kwargs.get("device", torch.device("cpu"))
+    # moving model to CPU because GPU doesn't have enough memory
+    device = torch.device("cpu")
     top_k = kwargs.get("top_k", 50)
 
-    model = model.to(device=device)
+    model.to(device=device)
     # set model to evaluation mode
     model.eval()
 

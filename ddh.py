@@ -146,6 +146,8 @@ class DivideEncode(nn.Module):
 HASH_DIM = 48
 # the distance to use for calculating precision/recall
 HAMM_RADIUS = 2
+# top_k closet images to score for mean average precision
+TOP_K = 50
 # number of epochs to train
 NUM_EPOCHS = 5
 # optimizer parameters
@@ -266,7 +268,7 @@ def train(model, loader, optim, logger, **kwargs):
 def predict(model, loader_gallery, loader_test, logger, **kwargs):
     # moving model to CPU because GPU doesn't have enough memory
     device = kwargs.get("device", torch.device("cpu"))
-    top_k = kwargs.get("top_k", 3)
+    top_k = kwargs.get("top_k", TOP_K)
 
     model.to(device=device)
     # set model to evaluation mode

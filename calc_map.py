@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import average_precision_score
 from pdb import set_trace
 
 def calc_map(matches, rankings, top_k):
@@ -32,27 +33,7 @@ def calc_map(matches, rankings, top_k):
         rank_slice = rankings[:top_k, idx]
         correct_retrievals[:, idx] = matches[rank_slice, idx]
 
-    # [[1,2,3,...,top_k], [1,2,3,...,top_k]]
-    # to facilitate calculating the average precision
-    idx = np.linspace(1, top_k, top_k, dtype="int").reshape((top_k, 1))
-    correct_idx = np.repeat(idx, num_test, axis=1)
-    # sum up all of the scores across the top_k for each test sample
-    summed_scores = np.zeros_like(correct_idx)
-    for idx in range(top_k):
-        # sum the number of correct retrievals from 1 up to idx
-        summed_scores[idx, :] = correct_retrievals[:idx+1, :].sum(axis=0)
-
-    # mask out the scores for the incorrect retrievals
-    summed_scores = summed_scores * correct_retrievals
-    # count the number of correct retrievals to be divided
-    num_corrects = correct_retrievals.sum(axis=0)
-
-    # calculate mean average precision
-    mean_ap = (summed_scores / correct_idx).sum(axis=0) / num_corrects
-    # set the nan values to 0
-    mean_ap[mean_ap != mean_ap] = 0
-
-    return mean_ap
+    return average_precision_score(matches[:top_k, :], correct_retrievals)
 
 if __name__ == "__main__":
     matches = np.array([
@@ -70,6 +51,5 @@ if __name__ == "__main__":
         [2,2,3,4]
     ], dtype="int8")
     mean_ap = calc_map(matches, ranking, top_k=3)
-    target = np.array([5/6, 1/2, 1, 7/12])
-    num_correct = np.isclose(mean_ap, target).sum()
-    assert num_correct == 4, "Invalid calculation!"
+    target = np.array([5/6, 1/2, 1, 7/12]).mean()
+    assert np.isclose(mean_ap, target), "Invalid calculation!"

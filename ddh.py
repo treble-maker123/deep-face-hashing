@@ -144,10 +144,10 @@ HASH_DIM = 48
 NUM_EPOCHS = 5
 OPTIM_PARAMS = {
     "lr": 1e-2,
-    "weight_decay": 2e-4
+    "weight_decay": 0.0
 }
 CUSTOM_PARAMS = {
-    "beta": 1.0, # quantization loss regularizer
+    "beta": 0.001, # quantization loss regularizer
     "img_size": 32
 }
 BATCH_SIZE = {

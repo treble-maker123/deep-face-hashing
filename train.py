@@ -77,7 +77,7 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
 
         start = time()
         mean_ap = predict(model, loader_gallery, loader_val, logger,
-                          device=device).mean()
+                          device=device)
         if mean_ap > highest_map:
             logger.write(
                 "Higher mean average precision {:.8f}/{:.8f}, saving!"
@@ -99,7 +99,7 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
     best_model.load_state_dict(torch.load(checkpoint_path))
     start = time()
     mean_ap = predict(best_model, loader_gallery, loader_test,
-                      logger, device=device).mean()
+                      logger, device=device)
 
     logger.write("Test completed in {:0.0f} seconds."
                     .format(time() - start))

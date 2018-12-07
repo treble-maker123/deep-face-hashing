@@ -29,7 +29,6 @@ model = model.to(device=device)
 
 optimizer = optim.Adam(model.parameters(), **OPTIM_PARAMS)
 
-
 run_id = uuid.uuid4().hex.upper()[0:6]
 now = datetime.now().strftime("%m-%d_%H-%M-%S")
 file_name = now + "_" + run_id
@@ -54,21 +53,13 @@ highest_map = 0.0
 with Logger(write_to_file=True, file_name=file_name) as logger:
     logger.write(
         "Starting run {} for {} epochs with model {}, and following params"
-            .format(run_id, NUM_EPOCHS, type(model_class).__name__))
+            .format(run_id, NUM_EPOCHS, type(model).__name__))
     logger.write("hash_dim: " + str(HASH_DIM))
     logger.write(OPTIM_PARAMS)
     logger.write(CUSTOM_PARAMS)
     logger.write(BATCH_SIZE)
     logger.write(LOADER_PARAMS)
     logger.write("====== START ======")
-
-    start = time()
-    logger.write("Loading data...")
-    train_set, train_label = set_to_tensor(loader_vocab)
-    val_set, val_label = set_to_tensor(loader_val)
-    test_set, test_label = set_to_tensor(loader_test)
-    logger.write("Finished loading data in {:.0f} seconds."
-                    .format(time() - start))
 
     for epoch in range(NUM_EPOCHS):
         # ======================================================================
@@ -85,8 +76,7 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
                         .format(time() - start))
 
         start = time()
-        mean_ap = predict(model, train_set, train_label,
-                          val_set, val_label, logger).mean()
+        mean_ap = predict(model, loader_gallery, loader_val, logger).mean()
         if mean_ap > highest_map:
             logger.write(
                 "Higher mean average precision {:.8f}/{:.8f}, saving!"
@@ -107,8 +97,8 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
     best_model = model_class(hash_dim=HASH_DIM)
     best_model.load_state_dict(torch.load(checkpoint_path))
     start = time()
-    mean_ap = predict(best_model, train_set, train_label,
-                      test_set, test_label, logger).mean()
+    mean_ap = predict(best_model, loader_gallery, loader_test,
+                      logger, device=device).mean()
 
     logger.write("Test completed in {:0.0f} seconds."
                     .format(time() - start))

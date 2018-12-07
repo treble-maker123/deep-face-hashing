@@ -156,6 +156,7 @@ TRANSFORMS = T.Compose([
 ])
 BATCH_SIZE = {
     "train": 256,
+    "gallery": 1024,
     "val": 256,
     "test": 256
 }
@@ -189,13 +190,15 @@ data_test = FaceScrubDataset(type="label",
                              transform=TRANSFORMS,
                              hash_dim=HASH_DIM)
 
+# for training use, shuffling
 loader_train = DataLoader(data_train,
                           batch_size=BATCH_SIZE["train"],
                           shuffle=True,
                           **LOADER_PARAMS)
 
-loader_vocab = DataLoader(data_train,
-                          batch_size=BATCH_SIZE["train"],
+# for use as gallery, no shuffling
+loader_gallery = DataLoader(data_train,
+                          batch_size=BATCH_SIZE["gallery"],
                           shuffle=False,
                           **LOADER_PARAMS)
 
@@ -210,33 +213,12 @@ loader_test = DataLoader(data_test,
 
 model_class = DiscriminativeDeepHashing
 
-def set_to_tensor(loader):
-    '''
-    Transform all of the data in a loader into a data set and its corresponding
-    labels.
-    '''
-    sets = None
-    label = None
-
-    for X, y in loader:
-        if sets is None:
-            sets = X
-        else:
-            sets = torch.cat((sets, X))
-
-        if label is None:
-            label = y
-        else:
-            label = torch.cat((label, y))
-
-    return sets, label
-
 def train(model, loader, optim, logger, **kwargs):
     '''
     Train for one epoch.
     '''
     device = kwargs.get("device", torch.device("cpu"))
-    print_iter = kwargs.get("print_iter", 20)
+    print_iter = kwargs.get("print_iter", 1)
 
     model.to(device=device)
     # set model to train mode
@@ -262,7 +244,7 @@ def train(model, loader, optim, logger, **kwargs):
         quant_losses.append(quant_loss.item())
         score_losses.append(score_loss.item())
 
-        if num_iter+1 % print_iter == 0:
+        if (num_iter+1) % print_iter == 0:
             logger.write(
                 "\tIter {}".format(num_iter+1) +
                 "- quant loss: {:.8f}, score loss: {:.8f}"
@@ -271,31 +253,60 @@ def train(model, loader, optim, logger, **kwargs):
     return sum(quant_losses)/len(quant_losses), \
            sum(score_losses)/len(score_losses)
 
-def predict(model, train_set, train_label,
-            test_set, test_label, logger, **kwargs):
+def predict(model, loader_gallery, loader_test, logger, **kwargs):
     # moving model to CPU because GPU doesn't have enough memory
-    device = torch.device("cpu")
+    device = kwargs.get("device", torch.device("cpu"))
     top_k = kwargs.get("top_k", 3)
 
     model.to(device=device)
     # set model to evaluation mode
     model.eval()
 
+    # [gallery_codes, gallery_label, test_codes, test_label]
+    data = [None] * 4
+
     with torch.no_grad():
-        _, train_codes = model(train_set.to(device=device))
-        _, test_codes = model(test_set.to(device=device))
+        # process the gallery images
+        for X, y in loader_gallery:
+            _, gcodes = model(X.to(device=device))
+
+            if data[0] == None:
+                data[0] = gcodes
+            else:
+                data[0] = torch.cat((data[0], gcodes))
+
+            if data[1] == None:
+                data[1] = y
+            else:
+                data[1] = torch.cat((data[1], y))
+
+        # process the test images
+        for X, y in loader_test:
+            _, gcodes = model(X.to(device=device))
+
+            if data[2] == None:
+                data[2] = gcodes
+            else:
+                data[2] = torch.cat((data[2], gcodes))
+
+            if data[3] == None:
+                data[3] = y
+            else:
+                data[3] = torch.cat((data[3], y))
+
+        gallery_codes, gallery_label, test_codes, test_label = data
         # activating with sign function
-        bin_train_codes = train_codes > 0
+        bin_gallery_codes = gallery_codes > 0
         bin_test_codes = test_codes > 0
-        # reshape labels so train and test match shape
-        train_label = train_label.unsqueeze(1)
+        # reshape labels so gallery and test match shape
+        gallery_label = gallery_label.unsqueeze(1)
         test_label = test_label.unsqueeze(1)
-        train_label = train_label.repeat(1, test_label.shape[0])
-        test_label = test_label.repeat(1, train_label.shape[0])
+        gallery_label = gallery_label.repeat(1, test_label.shape[0])
+        test_label = test_label.repeat(1, gallery_label.shape[0])
         # how many matches between train and test
-        label_match = train_label == test_label.t()
+        label_match = gallery_label == test_label.t()
         # hamming distance between the binary codes
-        dist = hamming_dist(bin_train_codes.numpy(), bin_test_codes.numpy())
+        dist = hamming_dist(bin_gallery_codes.numpy(), bin_test_codes.numpy())
         rankings = np.argsort(dist, axis=0)
         mean_ap = calc_map(label_match.numpy(), rankings, top_k=top_k)
 

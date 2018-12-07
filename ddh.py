@@ -144,16 +144,12 @@ HASH_DIM = 48
 NUM_EPOCHS = 5
 OPTIM_PARAMS = {
     "lr": 1e-2,
-    "weight_decay": 0.0
+    "weight_decay": 2e-4
 }
 CUSTOM_PARAMS = {
-    "beta": 0.01 # quantization loss regularizer
+    "beta": 1.0, # quantization loss regularizer
+    "img_size": 32
 }
-TRANSFORMS = T.Compose([
-    T.ToPILImage(),
-    T.Resize((32, 32)),
-    T.ToTensor()
-])
 BATCH_SIZE = {
     "train": 256,
     "gallery": 128,
@@ -174,6 +170,12 @@ LOADER_PARAMS = {
 # undo_create_set("test")
 # create_set("val")
 # create_set("test")
+
+TRANSFORMS = T.Compose([
+    T.ToPILImage(),
+    T.Resize((CUSTOM_PARAMS['img_size'], CUSTOM_PARAMS['img_size'])),
+    T.ToTensor()
+])
 
 data_train = FaceScrubDataset(type="label",
                               mode="train",

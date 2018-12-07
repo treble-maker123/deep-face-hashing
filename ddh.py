@@ -141,7 +141,7 @@ class DivideEncode(nn.Module):
 # Hyperparameters
 # ==========================
 HASH_DIM = 48
-NUM_EPOCHS = 40
+NUM_EPOCHS = 5
 OPTIM_PARAMS = {
     "lr": 1e-2,
     "weight_decay": 0.0
@@ -156,7 +156,7 @@ TRANSFORMS = T.Compose([
 ])
 BATCH_SIZE = {
     "train": 256,
-    "gallery": 2048,
+    "gallery": 128,
     "val": 256,
     "test": 256
 }

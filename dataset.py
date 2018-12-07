@@ -1,6 +1,5 @@
 import os
 import cv2
-import hashlib
 import torch
 import numpy as np
 from torch.utils.data import Dataset
@@ -27,7 +26,7 @@ class FaceScrubDataset(Dataset):
                  type="comparison", mode="train", transform=None):
         if mode not in ["train", "val", "test"]:
             raise Exception("Invalid dataset mode")
-        if type not in ["hash_label", "comparison"]:
+        if type not in ["label", "comparison"]:
             raise Exception("Invalid dataset type")
 
         self.mode = mode
@@ -40,14 +39,17 @@ class FaceScrubDataset(Dataset):
     def __len__(self):
         if self.type == "comparison":
             return len(self.img_paths) ** 2
-        elif self.type == "hash_label":
+        elif self.type == "label":
+            # if self.mode == "train": return 10
+            # elif self.mode == "val": return 8
+            # else: return 5
             return len(self.img_paths)
 
     def __getitem__(self, index):
         if self.type == "comparison":
             return self._get_data_comparison(index)
-        elif self.type == "hash_label":
-            return self._get_data_hash_label(index)
+        elif self.type == "label":
+            return self._get_data_label(index)
         else:
             raise Exception("Invalid dataset type")
 
@@ -56,15 +58,15 @@ class FaceScrubDataset(Dataset):
         For __getitem__() method. Return data at index in the format,
             (baseline_image, comparison_image, label)
 
-        Label is a boolean specifying whether the baseline and comparison are of the same person.
+        Label is an integer specifying whether the baseline and comparison are of the same person. 1 is True and 0 is False.
         '''
         baseline, compare = self._get_pair_from_index(index)
         label = baseline.split("/")[2] == compare.split("/")[2]
         bimg = self._get_img_from_path(baseline)
         cimg = self._get_img_from_path(compare)
-        return (bimg, cimg, label)
+        return (bimg, cimg, int(label))
 
-    def _get_data_hash_label(self, index):
+    def _get_data_label(self, index):
         '''
         For __getitem__() method. Return data at index in the format,
             (image, hash_code)
@@ -72,19 +74,8 @@ class FaceScrubDataset(Dataset):
         hash_code is a numpy array of integers of 0s and 1s, mapping the name of the peson into Hamming space.
         '''
         img_path = self.img_paths[index]
-        image = self._get_img_from_path(img_path)
-        hash_code = self._get_hashed_label(img_path.split("/")[2])
-        assert hash_code.size == self.hash_dim, "Invalid hash_code size"
-        return (image, hash_code)
-
-    def _get_hashed_label(self, name):
-        '''
-        Turn a strig into binary hash code.
-        '''
-        encoded = str.encode(name)
-        digest = hashlib.md5(encoded).hexdigest()
-        hash_code = list(bin(int(digest, 16))[2:])[:self.hash_dim]
-        return np.array(hash_code, dtype="int")
+        name = img_path.split("/")[2]
+        return (self._get_img_from_path(img_path), self.names.index(name))
 
     def _get_pair_from_index(self, index):
         '''
@@ -136,7 +127,7 @@ class FaceScrubDataset(Dataset):
 
 def create_set(mode, num_imgs=5):
     '''
-    This method randomly picks five images from the DATA_DIR folder and places them in a folder.
+    This method randomly picks num_imgs images from the DATA_DIR folder and places them in a folder.
     '''
     options = ["val", "test"]
     if mode not in options: return
@@ -182,16 +173,9 @@ def assert_data_split_correct():
     assert val == (num_people * 5) ** 2
     assert test == (num_people * 5) ** 2
 
-def assert_hash_code_no_conflicts():
-    dataset = FaceScrubDataset(type="hash_label")
-    names = dataset.names
-    array = list(map(dataset._get_hashed_label, names))
-    hash_codes = list(map(lambda arr: ''.join(str(e) for e in arr), array))
-    assert len(hash_codes) == len(set(hash_codes)), "Hash codes conflict!"
 
 if __name__ == "__main__":
     # dataset = FaceScrubDataset()
-    # dataset = FaceScrubDataset(type="hash_label")
+    # dataset = FaceScrubDataset(type="label")
     # assert_data_split_correct()
-    # assert_hash_code_no_conflicts()
     pass

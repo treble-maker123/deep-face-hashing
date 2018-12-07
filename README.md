@@ -1,4 +1,4 @@
-# CS670 Computer Vision Final Project
+# Face Hasing Using Neural Networks
 
 ## File structure
 

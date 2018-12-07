@@ -3,4 +3,4 @@ __pycache__
 .DS_Store
 data/*
 logs/*
-models/*
+saved_models/*

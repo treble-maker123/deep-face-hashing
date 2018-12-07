@@ -144,10 +144,10 @@ HASH_DIM = 48
 NUM_EPOCHS = 5
 OPTIM_PARAMS = {
     "lr": 1e-2,
-    "weight_decay": 0.0
+    "weight_decay": 2e-4
 }
 CUSTOM_PARAMS = {
-    "beta": 0.1, # quantization loss regularizer
+    "beta": 1.0, # quantization loss regularizer
     "img_size": 32
 }
 BATCH_SIZE = {
@@ -236,10 +236,11 @@ def train(model, loader, optim, logger, **kwargs):
         scores, codes = model(X)
         # quantization loss
         quant_loss = CUSTOM_PARAMS['beta'] * (codes.abs() - 1).abs().mean()
-        quant_loss.backward(retain_graph=True)
         # score error
         score_loss = F.cross_entropy(scores, y)
-        score_loss.backward()
+        # total loss
+        loss = quant_loss + score_loss
+        loss.backward()
         # apply gradient
         optim.step()
         # save the lossses

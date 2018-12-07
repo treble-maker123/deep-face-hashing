@@ -112,9 +112,9 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
                         .format(time() - start))
 
         logger.write("val MAP: {:.8f}, ".format(mean_ap) +
-                     "average precision: {:.4f}, ".format(avg_pre) +
-                     "average recall: {:.4f}, ".format(avg_rec) +
-                     "average harmonic mean: {:0.4f}".format(avg_hmean))
+                     "average precision: {:.6f}, ".format(avg_pre) +
+                     "average recall: {:.6f}, ".format(avg_rec) +
+                     "average harmonic mean: {:0.6f}".format(avg_hmean))
 
         logger.write("")
 
@@ -130,9 +130,9 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
     logger.write("Test completed in {:0.0f} seconds"
                     .format(time() - start))
     logger.write("test MAP: {:.8f}, ".format(stats['test_mean_ap']) +
-                 "average precision: {:.4f}, ".format(stats['test_avg_pre']) +
-                 "average recall: {:.4f}, ".format(stats['test_avg_rec']) +
-                 "average harmonic mean: {:0.4f}"
+                 "average precision: {:.6f}, ".format(stats['test_avg_pre']) +
+                 "average recall: {:.6f}, ".format(stats['test_avg_rec']) +
+                 "average harmonic mean: {:0.6f}"
                     .format(stats['test_avg_hmean']))
 
     logger.write("====== END ======")

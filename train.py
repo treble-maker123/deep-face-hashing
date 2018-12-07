@@ -65,7 +65,7 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
         # ======================================================================
         # TRAINING
         # ======================================================================
-        logger.write("Starting epoch {}:".format(epoch+1))
+        logger.write("Starting epoch {}/{}:".format(epoch+1, NUM_EPOCHS))
 
         start = time()
         quant_loss, score_loss = train(model, loader_train, optimizer, logger,
@@ -88,7 +88,7 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
         logger.write("Validation completed in {:.0f} seconds."
                         .format(time() - start))
 
-        logger.write("Epoch {} - ".format(epoch+1) +
+        logger.write("Epoch {}/{} - ".format(epoch+1, NUM_EPOCHS) +
                      "quant loss: {:.8f}, score_loss: {:.8f}, "
                         .format(quant_loss, score_loss) +
                      "MAP on val: {:.8f}".format(mean_ap))

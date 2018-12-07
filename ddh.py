@@ -141,7 +141,7 @@ class DivideEncode(nn.Module):
 # Hyperparameters
 # ==========================
 HASH_DIM = 48
-NUM_EPOCHS = 200
+NUM_EPOCHS = 500
 OPTIM_PARAMS = {
     "lr": 1e-2,
     "weight_decay": 0.0
@@ -298,13 +298,16 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
         # activating with sign function
         bin_gallery_codes = gallery_codes > 0
         bin_test_codes = test_codes > 0
+
         # reshape labels so gallery and test match shape
         gallery_label = gallery_label.unsqueeze(1)
         test_label = test_label.unsqueeze(1)
         gallery_label = gallery_label.repeat(1, test_label.shape[0])
         test_label = test_label.repeat(1, gallery_label.shape[0])
+
         # how many matches between train and test
         label_match = gallery_label == test_label.t()
+
         # hamming distance between the binary codes
         dist = hamming_dist(bin_gallery_codes.numpy(), bin_test_codes.numpy())
         rankings = np.argsort(dist, axis=0)

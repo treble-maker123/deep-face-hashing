@@ -149,7 +149,7 @@ HAMM_RADIUS = 2
 # top_k closet images to score for mean average precision
 TOP_K = 50
 # number of epochs to train
-NUM_EPOCHS = 5
+NUM_EPOCHS = 10
 # optimizer parameters
 OPTIM_PARAMS = {
     "lr": 1e-2,

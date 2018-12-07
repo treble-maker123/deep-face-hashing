@@ -1,7 +1,7 @@
 import numpy as np
 from pdb import set_trace
 
-def calc_map(matches, rankings, top_k=50):
+def calc_map(matches, rankings, top_k):
     '''
     Calculate the mean average precision for each of the T test samples, from G
     training/gallery samples.
@@ -19,7 +19,12 @@ def calc_map(matches, rankings, top_k=50):
         (numpy.ndarray): an array containing mean average precision scores for
             each of the T test samples. Of shape (T, )
     '''
-    _, num_test = rankings.shape
+    num_gallery, num_test = rankings.shape
+
+    # if top_k is greater than the number of training images, set it to the
+    # number of training images, only for testing.
+    if num_gallery < top_k: top_k = num_gallery
+
     correct_retrievals = np.zeros((top_k, num_test), dtype="int8")
 
     for idx in range(num_test):

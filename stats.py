@@ -1,0 +1,4 @@
+
+MAP_PATH = None
+QUANT_PATH = None
+SCORE_PATH = None

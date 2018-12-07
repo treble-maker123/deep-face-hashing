@@ -141,7 +141,7 @@ class DivideEncode(nn.Module):
 # Hyperparameters
 # ==========================
 HASH_DIM = 48
-NUM_EPOCHS = 100
+NUM_EPOCHS = 10
 OPTIM_PARAMS = {
     "lr": 1e-2,
     "weight_decay": 0.0
@@ -236,7 +236,7 @@ def train(model, loader, optim, logger, **kwargs):
     Train for one epoch.
     '''
     device = kwargs.get("device", torch.device("cpu"))
-    print_iter = kwargs.get("print_iter", 10)
+    print_iter = kwargs.get("print_iter", 20)
 
     model.to(device=device)
     # set model to train mode
@@ -262,7 +262,7 @@ def train(model, loader, optim, logger, **kwargs):
         quant_losses.append(quant_loss.item())
         score_losses.append(score_loss.item())
 
-        if num_iter % print_iter == 0:
+        if num_iter+1 % print_iter == 0:
             logger.write(
                 "\tIter {}".format(num_iter+1) +
                 "- quant loss: {:.8f}, score loss: {:.8f}"
@@ -275,7 +275,7 @@ def predict(model, train_set, train_label,
             test_set, test_label, logger, **kwargs):
     # moving model to CPU because GPU doesn't have enough memory
     device = torch.device("cpu")
-    top_k = kwargs.get("top_k", 50)
+    top_k = kwargs.get("top_k", 3)
 
     model.to(device=device)
     # set model to evaluation mode

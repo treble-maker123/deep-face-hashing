@@ -4,3 +4,4 @@ __pycache__
 data/*
 logs/*
 saved_models/*
+stats/*

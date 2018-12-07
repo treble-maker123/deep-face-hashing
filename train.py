@@ -76,7 +76,8 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
                         .format(time() - start))
 
         start = time()
-        mean_ap = predict(model, loader_gallery, loader_val, logger).mean()
+        mean_ap = predict(model, loader_gallery, loader_val, logger,
+                          device=device).mean()
         if mean_ap > highest_map:
             logger.write(
                 "Higher mean average precision {:.8f}/{:.8f}, saving!"

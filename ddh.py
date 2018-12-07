@@ -156,7 +156,7 @@ TRANSFORMS = T.Compose([
 ])
 BATCH_SIZE = {
     "train": 256,
-    "gallery": 2048,
+    "gallery": 256,
     "val": 256,
     "test": 256
 }

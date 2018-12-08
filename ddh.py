@@ -331,20 +331,20 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
         start = time()
         dist = hamming_dist(bin_gallery_codes, bin_test_codes)
         rankings = np.argsort(dist, axis=0)
-        logger.write("Calculating hamming ranking took {} seconds."
-                        .format(time() - start))
+        # logger.write("Calculating hamming ranking took {:.2f} seconds."
+        #                 .format(time() - start))
 
         # mean average precision
         start = time()
         mean_ap = calc_map(label_match, rankings, top_k=top_k)
-        logger.write("Calculating MAP took {} seconds."
-                        .format(time() - start))
+        # logger.write("Calculating MAP took {:.2f} seconds."
+        #                 .format(time() - start))
 
         # calculate precision and recall curve
         start = time()
         avg_pre, avg_rec, avg_hmean, pre_curve, rec_curve = \
             calc_pre_rec(dist, label_match, HAMM_RADIUS)
-        logger.write("Calculating pre-rec stats took {} seconds."
-                        .format(time() - start))
+        # logger.write("Calculating pre-rec stats took {:.2f} seconds."
+        #                 .format(time() - start))
 
     return avg_pre, avg_rec, avg_hmean, pre_curve, rec_curve, mean_ap

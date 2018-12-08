@@ -14,7 +14,7 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
 
     with torch.no_grad():
         # process the gallery images
-        for X, y in loader_gallery:
+        for idx, (X, y) in enumerate(loader_gallery):
             _, gcodes = model(X.to(device=device))
 
             if data[0] is None:
@@ -28,7 +28,7 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
                 data[1] = torch.cat((data[1], y))
 
         # process the test images
-        for X, y in loader_test:
+        for idx, (X, y) in enumerate(loader_gallery):
             _, gcodes = model(X.to(device=device))
 
             if data[2] is None:

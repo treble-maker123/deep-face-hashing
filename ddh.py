@@ -256,7 +256,7 @@ def train(model, loader, optim, logger, **kwargs):
 
         if (num_iter+1) % print_iter == 0:
             logger.write(
-                "iter {}".format(num_iter+1) +
+                "iter {} ".format(num_iter+1) +
                 "- quant loss: {:.8f}, score loss: {:.8f}"
                     .format(quant_loss, score_loss))
 

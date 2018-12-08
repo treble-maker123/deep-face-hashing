@@ -40,9 +40,9 @@ class FaceScrubDataset(Dataset):
         if self.type == "comparison":
             return len(self.img_paths) ** 2
         elif self.type == "label":
-            # if self.mode == "train": return 256
-            # elif self.mode == "val": return 1024
-            # else: return 1024
+            # if self.mode == "train": return 25
+            # elif self.mode == "val": return 10
+            # else: return 10
             return len(self.img_paths)
 
     def __getitem__(self, index):

@@ -16,10 +16,10 @@ def eval_perf(gallery_codes, gallery_label, test_codes, test_label, **kwargs):
     label_match = (gallery_label == test_label.T).astype("int8")
 
     dist = hamming_dist(gallery_codes, test_codes)
-    rankings = np.argsort(dist, axis=0)
+    ranked = np.argsort(dist, axis=0)
 
     # mean average precision
-    mean_ap = calc_map(label_match, rankings, top_k=top_k)
+    mean_ap = calc_map(label_match, ranked, top_k=top_k)
 
     # calculate precision and recall curve
     avg_pre, avg_rec, avg_hmean, pre_curve, rec_curve = \

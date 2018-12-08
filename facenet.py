@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 from dataset import *
 
 class FaceNet(nn.Module):
-    def __init__(self, hash_dim=48, split_num=100, num_classes=530):
+    def __init__(self, hash_dim=48, split_num=40, num_classes=530):
         super(FaceNet, self).__init__()
         self.cn1 = nn.Conv2d(3, 32, kernel_size=3)
         nn.init.kaiming_normal_(self.cn1.weight)
@@ -127,8 +127,7 @@ BATCH_SIZE = {
     "test": 64
 }
 LOADER_PARAMS = {
-    "num_workers": multiprocessing.cpu_count() - 2,
-    # "num_workers": 1
+    "num_workers": multiprocessing.cpu_count() - 2
 }
 
 # ==========================

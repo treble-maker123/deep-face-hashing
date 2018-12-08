@@ -19,9 +19,9 @@ def calc_pre_rec(hamm_dist, gt, radius):
     # true positives
     tp = (pred * gt).sum(axis=0)
     # false positives
-    fp = ((pred == 1) * (gt == 0)).astype("int8").sum(axis=0)
+    fp = (pred * (gt == 0)).astype("int8").sum(axis=0)
     # false negative
-    fn = ((pred == 0) * (gt == 0)).astype("int8").sum(axis=0)
+    fn = ((pred == 0) * gt).astype("int8").sum(axis=0)
     # recall
     rec = tp / (tp + fn)
     rec[rec != rec] = 0

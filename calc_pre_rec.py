@@ -11,22 +11,18 @@ def calc_pre_rec(hamm_dist, gt, radius):
     max_val = dist.max()
     scores = ((max_val - dist) / max_val) ** 2
     scores[scores != scores] = 1
-    # calculate the curves
+    # calculate the "micro average" of the curves
     pre_curve, rec_curve, _ = precision_recall_curve(gt.ravel(), scores.ravel())
 
     # pred == 1 is what the model believes to be the person
     pred = (dist == 0).astype("int8")
     # true positives
     tp = (pred * gt).sum(axis=0)
-    # false positives
-    fp = (pred * (gt == 0)).astype("int8").sum(axis=0)
-    # false negative
-    fn = ((pred == 0) * gt).astype("int8").sum(axis=0)
     # recall
-    rec = tp / (tp + fn)
+    rec = tp / gt.sum(axis=0)
     rec[rec != rec] = 0
     # precision
-    pre = tp / (tp + fp)
+    pre = tp / pred.sum(axis=0)
     pre[pre != pre] = 0
     # harmonic mean
     hmean = 2 * (pre * rec) / (pre + rec)

@@ -89,7 +89,6 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
         stats['score_losses'].append(score_loss)
         logger.write("Training completed in {:.0f} seconds."
                         .format(time() - start))
-
         logger.write("")
 
         start = time()
@@ -115,7 +114,6 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
                      "avg precision: {:.6f}, ".format(avg_pre) +
                      "avg recall: {:.6f}, ".format(avg_rec) +
                      "avg harmonic mean: {:0.6f}".format(avg_hmean))
-
         logger.write("")
 
 

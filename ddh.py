@@ -142,14 +142,14 @@ class DivideEncode(nn.Module):
 # Hyperparameters
 # ==========================
 
+# number of epochs to train
+NUM_EPOCHS = 50
 # the number of hash bits in the output
 HASH_DIM = 48
 # the distance to use for calculating precision/recall
 HAMM_RADIUS = 2
 # top_k closet images to score for mean average precision
 TOP_K = 50
-# number of epochs to train
-NUM_EPOCHS = 10
 # optimizer parameters
 OPTIM_PARAMS = {
     "lr": 1e-2,

@@ -149,10 +149,10 @@ TOP_K = 50
 # optimizer parameters
 OPTIM_PARAMS = {
     "lr": 1e-2,
-    "weight_decay": 0.0
+    "weight_decay":2e-4
 }
 CUSTOM_PARAMS = {
-    "beta": 0.001, # quantization loss regularizer
+    "beta": 1.0, # quantization loss regularizer
     "img_size": 128
 }
 BATCH_SIZE = {

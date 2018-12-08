@@ -6,11 +6,9 @@ import torchvision.transforms as T
 import multiprocessing
 from time import time
 from torch.utils.data import DataLoader
+from matplotlib import pyplot as plt
 
 from dataset import *
-from hamming_dist import *
-from calc_map import *
-from calc_pre_rec import *
 
 class DiscriminativeDeepHashing(nn.Module):
     '''
@@ -158,7 +156,7 @@ OPTIM_PARAMS = {
 }
 CUSTOM_PARAMS = {
     "beta": 0.001, # quantization loss regularizer
-    "img_size": 32
+    "img_size": 200
 }
 BATCH_SIZE = {
     "train": 256,
@@ -182,7 +180,6 @@ LOADER_PARAMS = {
 # create_set("test")
 
 TRANSFORMS = T.Compose([
-    T.ToPILImage(),
     T.Resize((CUSTOM_PARAMS['img_size'], CUSTOM_PARAMS['img_size'])),
     T.ToTensor()
 ])
@@ -266,85 +263,9 @@ def train(model, loader, optim, logger, **kwargs):
     return sum(quant_losses)/len(quant_losses), \
            sum(score_losses)/len(score_losses)
 
-def predict(model, loader_gallery, loader_test, logger, **kwargs):
-    # moving model to CPU because GPU doesn't have enough memory
-    device = kwargs.get("device", torch.device("cpu"))
-    top_k = kwargs.get("top_k", TOP_K)
 
-    model.to(device=device)
-    # set model to evaluation mode
-    model.eval()
-
-    # [gallery_codes, gallery_label, test_codes, test_label]
-    data = [None] * 4
-
-    with torch.no_grad():
-        # process the gallery images
-        for X, y in loader_gallery:
-            _, gcodes = model(X.to(device=device))
-
-            if data[0] is None:
-                data[0] = gcodes
-            else:
-                data[0] = torch.cat((data[0], gcodes))
-
-            if data[1] is None:
-                data[1] = y
-            else:
-                data[1] = torch.cat((data[1], y))
-
-        # process the test images
-        for X, y in loader_test:
-            _, gcodes = model(X.to(device=device))
-
-            if data[2] is None:
-                data[2] = gcodes
-            else:
-                data[2] = torch.cat((data[2], gcodes))
-
-            if data[3] is None:
-                data[3] = y
-            else:
-                data[3] = torch.cat((data[3], y))
-
-        gallery_codes, gallery_label, test_codes, test_label = data
-        # activating with sign function
-        bin_gallery_codes = gallery_codes > 0
-        bin_test_codes = test_codes > 0
-        # set the variables to CPU and array
-        bin_gallery_codes = bin_gallery_codes.cpu().numpy()
-        bin_test_codes = bin_test_codes.cpu().numpy()
-
-        # reshape labels so gallery and test match shape
-        gallery_label = gallery_label.unsqueeze(1)
-        test_label = test_label.unsqueeze(1)
-        gallery_label = gallery_label.repeat(1, test_label.shape[0])
-        test_label = test_label.repeat(1, gallery_label.shape[0])
-        # set the variables to CPU and array
-        gallery_label = gallery_label.cpu().numpy()
-        test_label = test_label.cpu().numpy()
-
-        # how many matches between train and test
-        label_match = (gallery_label == test_label.T).astype("int8")
-
-        # hamming distance between the binary codes
-        start = time()
-        dist = hamming_dist(bin_gallery_codes, bin_test_codes)
-        rankings = np.argsort(dist, axis=0)
-        # logger.write("Calculating hamming ranking took {:.2f} seconds."
-        #                 .format(time() - start))
-
-        # mean average precision
-        start = time()
-        mean_ap = calc_map(label_match, rankings, top_k=top_k)
-        # logger.write("Calculating MAP took {:.2f} seconds."
-        #                 .format(time() - start))
-
-        # calculate precision and recall curve
-        start = time()
-        avg_pre, avg_rec, avg_hmean, pre_curve, rec_curve = \
-            calc_pre_rec(dist, label_match, HAMM_RADIUS)
-        # logger.write("Calculating pre-rec stats took {:.2f} seconds."
-        #                 .format(time() - start))
-
-    return avg_pre, avg_rec, avg_hmean, pre_curve, rec_curve, mean_ap
+if __name__ == "__main__":
+    # visualize the images
+    img = data_train[100][0].transpose(0, 1).transpose(1, 2)
+    plt.imshow(img)
+    plt.show()

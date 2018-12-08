@@ -1,9 +1,9 @@
 import os
-import cv2
 import torch
 import numpy as np
 from torch.utils.data import Dataset
 from utils import DATA_DIR, get_data_path, mkdir, lsdir
+from PIL import Image
 from pdb import set_trace
 
 class FaceScrubDataset(Dataset):
@@ -71,7 +71,8 @@ class FaceScrubDataset(Dataset):
         For __getitem__() method. Return data at index in the format,
             (image, hash_code)
 
-        hash_code is a numpy array of integers of 0s and 1s, mapping the name of the peson into Hamming space.
+        hash_code is a numpy array of integers of 0s and 1s, mapping the name
+        of the peson into Hamming space.
         '''
         img_path = self.img_paths[index]
         name = img_path.split("/")[2]
@@ -120,9 +121,9 @@ class FaceScrubDataset(Dataset):
         '''
         Returns an image and applies the transformations defined in self.transform.
         '''
-        img = cv2.imread(path)
+        pil_img = Image.open(path)
         if self.transform is not None:
-            img = self.transform(img)
+            img = self.transform(pil_img)
         return img
 
 def create_set(mode, num_imgs=5):

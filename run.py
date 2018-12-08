@@ -14,7 +14,8 @@ from matplotlib import pyplot as plt
 
 from pdb import set_trace
 from logger import *
-
+from eval_perf import *
+from predict import *
 
 from ddh import *
 
@@ -91,9 +92,17 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
                         .format(time() - start))
         logger.write("")
 
+        # ======================================================================
+        # validation
+        # ======================================================================
         start = time()
-        avg_pre, avg_rec, avg_hmean, _, _, mean_ap = \
+        # get all of the codes for gallery and test images
+        gallery_codes, gallery_label, test_codes, test_label = \
             predict(model, loader_gallery, loader_val, logger, device=device)
+        # evaluate the performance
+        avg_pre, avg_rec, avg_hmean, _, _, mean_ap = \
+            eval_perf(gallery_codes, gallery_label, test_codes, test_label,
+                      top_k=TOP_K, hamm_radius=HAMM_RADIUS)
         stats['val_mean_aps'].append(mean_ap)
         stats['val_avg_pre'].append(avg_pre)
         stats['val_avg_rec'].append(avg_rec)
@@ -116,14 +125,22 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
                      "avg harmonic mean: {:0.6f}".format(avg_hmean))
         logger.write("")
 
-
+    # ==========================================================================
+    # test
+    # ==========================================================================
     best_model = model_class(hash_dim=HASH_DIM)
     best_model.load_state_dict(torch.load(checkpoint_path))
+
     start = time()
+
+    # get all of the codes for gallery and test images
+    gallery_codes, gallery_label, test_codes, test_label= \
+        predict(best_model, loader_gallery, loader_test, logger, device=device)
+    # evaluate the performance
     stats['test_avg_pre'], stats['test_avg_rec'], stats['test_avg_hmean'], \
     stats['test_pre_curve'], stats['test_rec_curve'], stats['test_mean_ap'] = \
-        predict(best_model, loader_gallery,
-                loader_test, logger, device=device)
+            eval_perf(gallery_codes, gallery_label, test_codes, test_label,
+                      top_k=TOP_K, hamm_radius=HAMM_RADIUS)
 
     logger.write("Test completed in {:0.0f} seconds"
                     .format(time() - start))

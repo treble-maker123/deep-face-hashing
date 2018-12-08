@@ -19,20 +19,20 @@ class DiscriminativeDeepHashing(nn.Module):
 
     Image resized to 32x32, batch size of 256
 
-    Conv1 = 3x3 kernel, 1 stride, 20 dim (output 30x30)
-    Batc1
+    Conv1 = 3x3 kernel, 1 stride, 20 dim (output 31x31)
+    Batch
     Pool1 = 2x2 kernel (output 15x15)
 
     Conv2 = 2x2 kernel, 1 stride, 40 dim (output 14x14)
-    Batc1
+    Batch
     Pool2 = 2x2 kernel (output 7x7)
 
     Conv3 = 2x2 kernel, 1 stride, 60 dim (output 6x6)
-    Batc1
+    Batch
     Pool3 = 2x2 kernel (output 3x3)
 
     Conv4 = 2x2 kernel, 1 stride, 80 dim (output 2x2)
-    Batc1
+    Batch
 
     Merge = 60*3*3 + 80*2*2 = 860
 
@@ -70,7 +70,7 @@ class DiscriminativeDeepHashing(nn.Module):
 
         # merge layer
         self.mg1 = Merge()
-        self.fc1 = nn.Linear(860, hash_dim*split_num)
+        self.fc1 = nn.Linear(29180, hash_dim*split_num)
         self.bn5 = nn.BatchNorm1d(hash_dim*split_num)
 
         # hash layer
@@ -156,7 +156,7 @@ OPTIM_PARAMS = {
 }
 CUSTOM_PARAMS = {
     "beta": 0.001, # quantization loss regularizer
-    "img_size": 200
+    "img_size": 128
 }
 BATCH_SIZE = {
     "train": 256,

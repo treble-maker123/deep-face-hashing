@@ -18,7 +18,7 @@ from eval_perf import *
 from predict import *
 
 # from ddh import *
-from vggface import *
+from facenet import *
 
 if torch.cuda.is_available():
     device = torch.device("cuda")

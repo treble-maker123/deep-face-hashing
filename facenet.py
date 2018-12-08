@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
-from torchvision import models
 import multiprocessing
 from time import time
 from torch.utils.data import DataLoader
@@ -11,27 +10,94 @@ from matplotlib import pyplot as plt
 
 from dataset import *
 
-class VGGFace(nn.Module):
-    '''
-    '''
-    def __init__(self, hash_dim=48, split_num=10, num_classes=530):
-        super(VGGFace, self).__init__()
-        self.vgg = models.vgg19_bn()
+class FaceNet(nn.Module):
+    def __init__(self, hash_dim=48, split_num=100, num_classes=530):
+        super(FaceNet, self).__init__()
+        self.cn1 = nn.Conv2d(3, 32, kernel_size=3)
+        nn.init.kaiming_normal_(self.cn1.weight)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.mp1 = nn.MaxPool2d(2)
 
-        self.fc1 = nn.Linear(25088, 4092)
-        self.do1 = nn.Dropout(p=0.50)
-        self.fc2 = nn.Linear(4092, hash_dim)
-        self.fc3 = nn.Linear(hash_dim, num_classes)
+        self.cn2 = nn.Conv2d(32, 64, kernel_size=2)
+        nn.init.kaiming_normal_(self.cn2.weight)
+        self.bn2 = nn.BatchNorm2d(64)
+        self.mp2 = nn.MaxPool2d(2)
+
+        self.cn3 = nn.Conv2d(64, 128, kernel_size=2)
+        nn.init.kaiming_normal_(self.cn3.weight)
+        self.bn3 = nn.BatchNorm2d(128)
+        self.mp3 = nn.MaxPool2d(2)
+
+        self.cn4 = nn.Conv2d(128, 256, kernel_size=2)
+        nn.init.kaiming_normal_(self.cn4.weight)
+        self.bn4 = nn.BatchNorm2d(256)
+
+        # merge layer
+        self.mg1 = Merge()
+        self.fc1 = nn.Linear(78976, hash_dim*split_num)
+
+        # hash layer
+        self.de1 = DivideEncode(hash_dim*split_num, split_num)
+
+        self.fc2 = nn.Linear(hash_dim, num_classes)
 
     def forward(self, X):
-        features = self.vgg.features(X) # outputs 25088 features
-        flatten = features.view((features.shape[0], -1))
-
-        fc1 = F.relu(self.fc1(flatten))
-        codes = self.fc2(fc1)
-        scores = self.fc3(codes)
-
+        l1 = self.mp1(F.relu(self.bn1(self.cn1(X))))
+        l2 = self.mp2(F.relu(self.bn2(self.cn2(l1))))
+        l3 = self.mp3(F.relu(self.bn3(self.cn3(l2))))
+        l4 = F.relu(self.bn4(self.cn4(l3)))
+        # merge of output from layer 3 and 4
+        l5 = self.mg1(l3, l4)
+        # face feature layer
+        l6 = F.relu(self.fc1(l5))
+        # divide and encode
+        codes = self.de1(l6)
+        scores = self.fc2(codes)
         return scores, codes
+
+class Merge(nn.Module):
+    '''
+    Implementation of the Merged Layer in,
+
+    Discriminative Deep Hashing for Scalable Face Image Retrieval
+    https://www.ijcai.org/proceedings/2017/0315.pdf
+    '''
+    def __init__(self):
+        super(Merge, self).__init__()
+
+    def forward(self, X1, X2):
+        X1, X2 = self._flatten(X1), self._flatten(X2)
+        return self._merge(X1, X2)
+
+    def _flatten(self, X):
+        N = X.shape[0]
+        return X.view(N, -1)
+
+    def _merge(self, X1, X2):
+        return torch.cat((X1, X2), 1)
+
+class DivideEncode(nn.Module):
+    '''
+    Implementation of the divide-and-encode module in,
+
+    Simultaneous Feature Learning and Hash Coding with Deep Neural Networks
+    https://arxiv.org/pdf/1504.03410.pdf
+    '''
+    def __init__(self, num_inputs, num_per_group):
+        super(DivideEncode, self).__init__()
+        assert num_inputs % num_per_group == 0, \
+            "num_per_group should be divisible by num_inputs."
+        self.num_groups = num_inputs // num_per_group
+        self.num_per_group = num_per_group
+        weights_dim = (self.num_groups, self.num_per_group)
+        self.weights = nn.Parameter(torch.empty(weights_dim))
+        nn.init.xavier_normal_(self.weights)
+
+    def forward(self, X):
+        X = X.view((-1, self.num_groups, self.num_per_group))
+        return X.mul(self.weights).sum(2)
+
+model_class = FaceNet
 
 # ==========================
 # Hyperparameters
@@ -47,18 +113,18 @@ HAMM_RADIUS = 2
 TOP_K = 50
 # optimizer parameters
 OPTIM_PARAMS = {
-    "lr": 1e-3,
+    "lr": 1e-2,
     "weight_decay": 2e-4
 }
 CUSTOM_PARAMS = {
     "beta": 1.0, # quantization loss regularizer
-    "img_size": 224
+    "img_size": 128
 }
 BATCH_SIZE = {
-    "train": 16,
-    "gallery": 16,
-    "val": 16,
-    "test": 16
+    "train": 256,
+    "gallery": 256,
+    "val": 256,
+    "test": 256
 }
 LOADER_PARAMS = {
     "num_workers": multiprocessing.cpu_count() - 2,
@@ -115,8 +181,6 @@ loader_test = DataLoader(data_test,
                           batch_size=BATCH_SIZE["test"],
                           shuffle=False,
                           **LOADER_PARAMS)
-
-model_class = VGGFace
 
 def train(model, loader, optim, logger, **kwargs):
     '''

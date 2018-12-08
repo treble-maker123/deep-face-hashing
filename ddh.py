@@ -133,6 +133,7 @@ class DivideEncode(nn.Module):
         X = X.view((-1, self.num_groups, self.num_per_group))
         return X.mul(self.weights).sum(2)
 
+model_class = DiscriminativeDeepHashing
 
 # ==========================
 # Hyperparameters
@@ -216,8 +217,6 @@ loader_test = DataLoader(data_test,
                           batch_size=BATCH_SIZE["test"],
                           shuffle=False,
                           **LOADER_PARAMS)
-
-model_class = DiscriminativeDeepHashing
 
 def train(model, loader, optim, logger, **kwargs):
     '''

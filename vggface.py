@@ -28,10 +28,10 @@ class VGGFace(nn.Module):
         flatten = features.view((features.shape[0], -1))
 
         fc1 = F.relu(self.fc1(flatten))
-        codes = torch.tanh(self.fc2(fc1))
-        scores = torch.softmax(self.fc3(codes), dim=1)
+        codes = self.fc2(fc1)
+        scores = self.fc3(codes)
 
-        return codes, scores
+        return scores, codes
 
 # ==========================
 # Hyperparameters

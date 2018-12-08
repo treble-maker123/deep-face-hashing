@@ -71,11 +71,9 @@ class DiscriminativeDeepHashing(nn.Module):
         # merge layer
         self.mg1 = Merge()
         self.fc1 = nn.Linear(29180, hash_dim*split_num)
-        self.bn5 = nn.BatchNorm1d(hash_dim*split_num)
 
         # hash layer
         self.de1 = DivideEncode(hash_dim*split_num, split_num)
-        self.bn6 = nn.BatchNorm1d(hash_dim)
 
         self.fc2 = nn.Linear(hash_dim, num_classes)
 
@@ -87,11 +85,10 @@ class DiscriminativeDeepHashing(nn.Module):
         # merge of output from layer 3 and 4
         l5 = self.mg1(l3, l4)
         # face feature layer
-        l6 = F.relu(self.bn5(self.fc1(l5)))
+        l6 = F.relu(self.fc1(l5))
         # divide and encode
-        l7 = self.bn6(self.de1(l6))
-        codes = torch.tanh(l7)
-        scores = torch.softmax(self.fc2(codes), dim=1)
+        codes = self.de1(l6)
+        scores = self.fc2(codes)
         return scores, codes
 
 class Merge(nn.Module):

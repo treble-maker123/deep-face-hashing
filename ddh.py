@@ -4,6 +4,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 import multiprocessing
+from time import time
 from torch.utils.data import DataLoader
 
 from dataset import *
@@ -143,7 +144,7 @@ class DivideEncode(nn.Module):
 # ==========================
 
 # number of epochs to train
-NUM_EPOCHS = 50
+NUM_EPOCHS = 40
 # the number of hash bits in the output
 HASH_DIM = 48
 # the distance to use for calculating precision/recall
@@ -327,14 +328,23 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
         label_match = (gallery_label == test_label.T).astype("int8")
 
         # hamming distance between the binary codes
+        start = time()
         dist = hamming_dist(bin_gallery_codes, bin_test_codes)
         rankings = np.argsort(dist, axis=0)
+        logger.write("Calculating hamming ranking took {} seconds."
+                        .format(time() - start))
 
         # mean average precision
+        start = time()
         mean_ap = calc_map(label_match, rankings, top_k=top_k)
+        logger.write("Calculating MAP took {} seconds."
+                        .format(time() - start))
 
         # calculate precision and recall curve
+        start = time()
         avg_pre, avg_rec, avg_hmean, pre_curve, rec_curve = \
             calc_pre_rec(dist, label_match, HAMM_RADIUS)
+        logger.write("Calculating pre-rec stats took {} seconds."
+                        .format(time() - start))
 
     return avg_pre, avg_rec, avg_hmean, pre_curve, rec_curve, mean_ap

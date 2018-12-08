@@ -2,13 +2,18 @@ import os
 import torch
 import numpy as np
 from torch.utils.data import Dataset
+import torchvision.transforms as T
 from utils import DATA_DIR, get_data_path, mkdir, lsdir
 from PIL import Image
 from pdb import set_trace
+import multiprocessing
 
 class FaceScrubDataset(Dataset):
     '''
     The dataset has a total of 63903 images of 530 faces. The most images a person has is 191, and the least images a person has is 39.
+
+
+    Statistics for "comparison" type,
 
     The combination of datapoints is (63903 choose 2), which is
         (63903 * 63902) / 2 = 2,041,764,753
@@ -22,27 +27,36 @@ class FaceScrubDataset(Dataset):
     Five images per person set aside for test,
         7,022,500
     '''
-    def __init__(self, hash_dim=48,
-                 type="comparison", mode="train", transform=None):
+    def __init__(self, **kwargs):
+        hash_dim = kwargs.get("hash_dim", 48)
+        type = kwargs.get("type", "label")
+        mode = kwargs.get("mode", "train")
+        transform = kwargs.get("transform", [])
+        normalize = kwargs.get("normalize", True)
+
         if mode not in ["train", "val", "test"]:
             raise Exception("Invalid dataset mode")
         if type not in ["label", "comparison"]:
             raise Exception("Invalid dataset type")
+        if normalize:
+            transform.append(T.Normalize(
+                            (0.61186,0.46277,0.39181),
+                            (0.24004,0.20515,0.19287)))
 
         self.mode = mode
         self.type = type
         self.names = lsdir(DATA_DIR)
         self.img_paths = self._get_all_img_paths()
-        self.transform = transform
         self.hash_dim = hash_dim
+        self.transform = T.Compose(transform)
 
     def __len__(self):
         if self.type == "comparison":
             return len(self.img_paths) ** 2
         elif self.type == "label":
-            # if self.mode == "train": return 25
-            # elif self.mode == "val": return 10
-            # else: return 10
+            # if self.mode == "train": return 2
+            # elif self.mode == "val": return 1
+            # else: return 1
             return len(self.img_paths)
 
     def __getitem__(self, index):
@@ -121,9 +135,9 @@ class FaceScrubDataset(Dataset):
         '''
         Returns an image and applies the transformations defined in self.transform.
         '''
-        pil_img = Image.open(path)
+        img = Image.open(path)
         if self.transform is not None:
-            img = self.transform(pil_img)
+            img = self.transform(img)
         return img
 
 def create_set(mode, num_imgs=5):
@@ -163,20 +177,51 @@ def undo_create_set(mode):
 def assert_data_split_correct():
     undo_create_set("val")
     undo_create_set("test")
-    total_num = len(FaceScrubDataset("train"))
-    num_people = len(FaceScrubDataset("train").names)
+    total_num = len(FaceScrubDataset(mode="train"))
+    num_people = len(FaceScrubDataset(mode="train").names)
     assert total_num == 4083593409, "INCORRECT NUMBER OF IMAGES"
     create_set("val")
     create_set("test")
-    train = len(FaceScrubDataset("train"))
-    val = len(FaceScrubDataset("val"))
-    test = len(FaceScrubDataset("test"))
+    train = len(FaceScrubDataset(mode="train"))
+    val = len(FaceScrubDataset(mode="val"))
+    test = len(FaceScrubDataset(mode="test"))
     assert val == (num_people * 5) ** 2
     assert test == (num_people * 5) ** 2
 
+def calc_mean(X):
+    array = np.asarray(X[0])
+    R = array[:,:,0].mean()
+    G = array[:,:,1].mean()
+    B = array[:,:,2].mean()
+    return R, G, B
+
+def calc_std(X):
+    array = np.asarray(X[0])
+    R = array[:,:,0].std()
+    G = array[:,:,1].std()
+    B = array[:,:,2].std()
+    return R, G, B
+
+def get_mean_std():
+    dataset = FaceScrubDataset(type="label")
+    pool = multiprocessing.Pool(max(1, multiprocessing.cpu_count()-2))
+    print("Started calculating mean and stds")
+    means = pool.map(calc_mean, dataset)
+    stds = pool.map(calc_std, dataset)
+    pool.close()
+    pool.join()
+    return means, stds
 
 if __name__ == "__main__":
     # dataset = FaceScrubDataset()
     # dataset = FaceScrubDataset(type="label")
     # assert_data_split_correct()
+
+    # means, stds = get_mean_std()
+    # red_mean = 0.6118626050840847
+    # green_mean = 0.4627732225147951
+    # blue_mean = 0.39181750819165523
+    # red_std = 0.24004882860157573
+    # green_std = 0.20515205679125115
+    # blue_std = 0.19287499225344598
     pass

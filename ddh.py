@@ -179,10 +179,10 @@ LOADER_PARAMS = {
 # create_set("val")
 # create_set("test")
 
-TRANSFORMS = T.Compose([
+TRANSFORMS = [
     T.Resize((CUSTOM_PARAMS['img_size'], CUSTOM_PARAMS['img_size'])),
     T.ToTensor()
-])
+]
 
 data_train = FaceScrubDataset(type="label",
                               mode="train",

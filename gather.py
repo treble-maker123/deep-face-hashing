@@ -3,7 +3,7 @@ import pickle
 from ddh import *
 from logger import *
 from predict import *
-from util import *
+from utils import *
 
 MODELS_PATH = "./saved_models"
 MODEL_NAME = "/12-08_16-14-22_BA977C.pt"
@@ -27,7 +27,8 @@ if __name__ == "__main__":
         gallery_codes, gallery_label, test_codes, test_label = \
             predict(model, gallery, test, logger, device=device)
 
-    output = (gallery_codes, gallery_label, test_codes, test_label)
-    output_fn = MODEL_NAME.split(".")[0] + ".codes"
-    with open(CODES_PATH + output_fn, "wb") as file:
-        pickle.dump(output, file)
+        logger.write("Finished generating codes, writing to output...")
+        output = (gallery_codes, gallery_label, test_codes, test_label)
+        output_fn = MODEL_NAME.split(".")[0] + ".codes"
+        with open(CODES_PATH + output_fn, "wb") as file:
+            pickle.dump(output, file)

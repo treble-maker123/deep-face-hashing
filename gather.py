@@ -1,6 +1,6 @@
 import torch
 import pickle
-from ddh import *
+from facenet import *
 from logger import *
 from predict import *
 from utils import *

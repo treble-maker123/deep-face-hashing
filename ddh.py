@@ -262,6 +262,7 @@ def train(model, loader, optim, logger, **kwargs):
 
 if __name__ == "__main__":
     # visualize the images
-    img = data_train[100][0].transpose(0, 1).transpose(1, 2)
-    plt.imshow(img)
-    plt.show()
+    # img = data_train[100][0].transpose(0, 1).transpose(1, 2)
+    # plt.imshow(img)
+    # plt.show()
+    pass

@@ -15,7 +15,8 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
 
     with torch.no_grad():
         # process the gallery images
-        logger.write("Hashing gallery images...")
+        logger.write("Hashing {} gallery images..."
+                        .format(len(loader_gallery.dataset)))
         for idx, (X, y) in enumerate(loader_gallery):
             _, gcodes = model(X.to(device=device))
 
@@ -32,6 +33,9 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
             if idx % print_iter == 0:
                 logger.write("{}/{} gallery batches completed..." \
                                 .format(idx, len(loader_gallery)))
+
+        assert len(loader_gallery.dataset) == len(data[0])
+        assert len(loader_gallery.dataset) == len(data[1])
 
         logger.write("Hashing test images and labels...")
         # process the test images

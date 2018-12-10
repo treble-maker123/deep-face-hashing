@@ -4,6 +4,7 @@ import torch
 def predict(model, loader_gallery, loader_test, logger, **kwargs):
     # moving model to CPU because GPU doesn't have enough memory
     device = kwargs.get("device", torch.device("cpu"))
+    print_iter = kwargs.get("print_iter", 100)
 
     model.to(device=device)
     # set model to evaluation mode
@@ -28,8 +29,9 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
             else:
                 data[1] = torch.cat((data[1], y))
 
-            logger.write("{}/{} gallery batches completed..." \
-                            .format(idx, len(loader_gallery)))
+            if idx % print_iter == 0:
+                logger.write("{}/{} gallery batches completed..." \
+                                .format(idx, len(loader_gallery)))
 
         logger.write("Hashing test images and labels...")
         # process the test images
@@ -46,8 +48,9 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
             else:
                 data[3] = torch.cat((data[3], y))
 
-            logger.write("{}/{} test batches completed..." \
-                            .format(idx, len(loader_test)))
+            if idx % print_iter == 0:
+                logger.write("{}/{} test batches completed..." \
+                                .format(idx, len(loader_test)))
 
         gallery_codes, gallery_label, test_codes, test_label = data
         # activating with sign function

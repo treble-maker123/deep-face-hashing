@@ -28,7 +28,8 @@ if __name__ == "__main__":
             predict(model, gallery, test, logger, device=device)
 
         logger.write("Finished generating codes, writing to output...")
-        output = (gallery_codes, gallery_label, test_codes, test_label)
+        output = (gallery_codes.cpu(), gallery_label.cpu(),
+                  test_codes.cpu(), test_label.cpu())
         output_fn = MODEL_NAME.split(".")[0] + ".codes"
         with open(CODES_PATH + output_fn, "wb") as file:
             pickle.dump(output, file)

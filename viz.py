@@ -23,11 +23,11 @@ if __name__ == "__main__":
     num_gallery, num_test = len(gallery_codes), len(test_codes)
 
     # reload the dataset without transformation
-    train = FaceScrubDataset(type="label",
+    gallery = FaceScrubDataset(type="label",
                              mode="train",
                              normalize=False,
                              hash_dim=HASH_DIM)
-    gallery = FaceScrubDataset(type="label",
+    test = FaceScrubDataset(type="label",
                                mode="test",
                                normalize=False,
                                hash_dim=HASH_DIM)

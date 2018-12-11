@@ -6,3 +6,4 @@ logs/*
 saved_models/*
 stats/*
 codes/*
+*.pyc

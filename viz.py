@@ -2,10 +2,10 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from hamming_dist import *
-from facenet import *
+from ddh2 import *
 
 CODES_PATH = "./codes"
-CODES_FILE = "/12-08_16-14-22_BA977C.codes"
+CODES_FILE = "/12-08_09-51-15_3F53AE.codes"
 DATASET_PATHS = "./dataset.pickle"
 
 # how many test subjects to pick up and examine

@@ -10,9 +10,9 @@ from matplotlib import pyplot as plt
 
 from dataset import *
 
-class FaceNet(nn.Module):
+class DDH2(nn.Module):
     def __init__(self, hash_dim=48, split_num=40, num_classes=530):
-        super(FaceNet, self).__init__()
+        super().__init__()
         self.cn1 = nn.Conv2d(3, 32, kernel_size=3)
         nn.init.kaiming_normal_(self.cn1.weight)
         self.bn1 = nn.BatchNorm2d(32)
@@ -97,7 +97,7 @@ class DivideEncode(nn.Module):
         X = X.view((-1, self.num_groups, self.num_per_group))
         return X.mul(self.weights).sum(2)
 
-model_class = FaceNet
+model_class = DDH2
 
 # ==========================
 # Hyperparameters

@@ -196,7 +196,8 @@ loader_test = DataLoader(data_test,
                           shuffle=False,
                           **LOADER_PARAMS)
 
-model = DDH3(hash_dim=HASH_DIM)
+model_class = DDH3
+model = model_class(hash_dim=HASH_DIM)
 optimizer = optim.Adam(model.parameters(), **OPTIM_PARAMS)
 
 def train(model, loader, optim, logger, **kwargs):

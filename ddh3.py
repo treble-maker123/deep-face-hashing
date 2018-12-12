@@ -259,6 +259,6 @@ def train(model, loader, optim, logger, **kwargs):
 
         if (num_iter+1) % print_iter == 0:
             logger.write(
-                "iter {} ".format(num_iter+1) +
+                "iter {}/{} ".format(num_iter+1, len(loader)) +
                 "- quant loss: {:.8f}, similiarity loss: {:.4f}"
                     .format(quant_loss.item(), sim_loss.item()))

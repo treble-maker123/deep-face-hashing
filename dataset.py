@@ -32,16 +32,12 @@ class FaceScrubDataset(Dataset):
         type = kwargs.get("type", "label")
         mode = kwargs.get("mode", "train")
         transform = kwargs.get("transform", [])
-        normalize = kwargs.get("normalize", True)
+        normalize = kwargs.get("normalize", False)
 
         if mode not in ["train", "val", "test"]:
             raise Exception("Invalid dataset mode")
         if type not in ["label", "comparison"]:
             raise Exception("Invalid dataset type")
-        if normalize:
-            transform.append(T.Normalize(
-                            (0.61186,0.46277,0.39181),
-                            (0.24004,0.20515,0.19287)))
 
         self.mode = mode
         self.type = type

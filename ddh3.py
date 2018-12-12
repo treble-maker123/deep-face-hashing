@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 
 from dataset import *
 
-class DiscriminativeDeepHashing(nn.Module):
+class DDH3(nn.Module):
     '''
     # ==========================================================================
     # Discriminative Deep Hashing for Scalable Face Image Retrieval
@@ -48,7 +48,7 @@ class DiscriminativeDeepHashing(nn.Module):
     # ==========================================================================
     '''
     def __init__(self, hash_dim=48, split_num=10):
-        super(DiscriminativeDeepHashing, self).__init__()
+        super().__init__()
         self.cn1 = nn.Conv2d(3, 20, kernel_size=3)
         nn.init.kaiming_normal_(self.cn1.weight)
         self.bn1 = nn.BatchNorm2d(20)
@@ -71,9 +71,11 @@ class DiscriminativeDeepHashing(nn.Module):
         # merge layer
         self.mg1 = Merge()
         self.fc1 = nn.Linear(29180, hash_dim*split_num)
+        nn.init.kaiming_normal_(self.fc1.weight)
+        self.bn5 = nn.BatchNorm2d(hash_dim*split_num)
 
         # hash layer
-        self.de1 = DivideEncode(hash_dim*split_num, split_num)
+        self.fc2 = nn.Linear(hash_dim*split_num, hash_dim)
 
     def forward(self, X):
         l1 = self.mp1(F.relu(self.bn1(self.cn1(X))))
@@ -85,8 +87,8 @@ class DiscriminativeDeepHashing(nn.Module):
         # face feature layer
         l6 = F.relu(self.fc1(l5))
         # divide and encode
-        codes = self.de1(l6)
-        return torch.tanh(codes), None
+        codes = self.fc2(l6)
+        return codes, None
 
 class Merge(nn.Module):
     '''
@@ -109,29 +111,6 @@ class Merge(nn.Module):
     def _merge(self, X1, X2):
         return torch.cat((X1, X2), 1)
 
-class DivideEncode(nn.Module):
-    '''
-    Implementation of the divide-and-encode module in,
-
-    Simultaneous Feature Learning and Hash Coding with Deep Neural Networks
-    https://arxiv.org/pdf/1504.03410.pdf
-    '''
-    def __init__(self, num_inputs, num_per_group):
-        super(DivideEncode, self).__init__()
-        assert num_inputs % num_per_group == 0, \
-            "num_per_group should be divisible by num_inputs."
-        self.num_groups = num_inputs // num_per_group
-        self.num_per_group = num_per_group
-        weights_dim = (self.num_groups, self.num_per_group)
-        self.weights = nn.Parameter(torch.empty(weights_dim))
-        nn.init.xavier_normal_(self.weights)
-
-    def forward(self, X):
-        X = X.view((-1, self.num_groups, self.num_per_group))
-        return X.mul(self.weights).sum(2)
-
-model_class = DiscriminativeDeepHashing
-
 # ==========================
 # Hyperparameters
 # ==========================
@@ -147,16 +126,16 @@ TOP_K = 50
 # optimizer parameters
 OPTIM_PARAMS = {
     "lr": 1e-2,
-    "weight_decay":2e-4
+    "weight_decay": 2e-4
 }
 CUSTOM_PARAMS = {
-    "dist_threshold": 6, # quantization loss
-    "alpha": 0.01, # distance threshold,
-    "print_iter": 40, # print every n iterations
+    "dist_threshold": 2, # distance threshold
+    "alpha": 1e-2, # quantization error
+    "print_iter": 1, # print every n iterations
     "img_size": 128
 }
 BATCH_SIZE = {
-    "train": 512,
+    "train": 236,
     "gallery": 128,
     "val": 256,
     "test": 256
@@ -217,6 +196,9 @@ loader_test = DataLoader(data_test,
                           shuffle=False,
                           **LOADER_PARAMS)
 
+model = DDH3(hash_dim=HASH_DIM)
+optimizer = optim.Adam(model.parameters(), **OPTIM_PARAMS)
+
 def train(model, loader, optim, logger, **kwargs):
     '''
     Train for one epoch.
@@ -225,7 +207,7 @@ def train(model, loader, optim, logger, **kwargs):
     print_iter = kwargs.get("print_iter", 40)
     # the distance threshold above which the dissimilar pairs will contribute 0
     # to loss.
-    mu = kwargs.get("dist_threshold", 6)
+    mu = kwargs.get("dist_threshold", 2)
     # quantization loss regularizer
     alpha = kwargs.get("alpha", 0.01)
 
@@ -251,6 +233,7 @@ def train(model, loader, optim, logger, **kwargs):
 
         C1, _ = model(X1)
         C2, _ = model(X2)
+
         l2_dist = ((C1[:, None, :] - C2) ** 2).sum(dim=2).sqrt()
         # minimize l2_dist for similar pairs (gt at i, j == 1)
         similar_loss = (gt * l2_dist).sum()
@@ -258,7 +241,7 @@ def train(model, loader, optim, logger, **kwargs):
         threshold = torch.max(mu - l2_dist, torch.zeros_like(l2_dist))[0]
         dissimilar_loss = ((1 - gt) * threshold).sum()
         # similarity loss
-        sim_loss = similar_loss + dissimilar_loss
+        sim_loss = (1/2 * similar_loss + 1/2 * dissimilar_loss)
         # quantization loss
         quant_loss = alpha * \
                         ((C1.abs() - 1).abs() + ((C2.abs() - 1)).abs()).sum()
@@ -272,5 +255,5 @@ def train(model, loader, optim, logger, **kwargs):
         if (num_iter+1) % print_iter == 0:
             logger.write(
                 "iter {} ".format(num_iter+1) +
-                "- quant loss: {:.8f}, similiarity loss: {:.8f}"
+                "- quant loss: {:.8f}, similiarity loss: {:.4f}"
                     .format(quant_loss.item(), sim_loss.item()))

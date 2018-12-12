@@ -48,7 +48,7 @@ class DiscriminativeDeepHashing(nn.Module):
     # ==========================================================================
     '''
     def __init__(self, hash_dim=48, split_num=10, num_classes=530):
-        super(DiscriminativeDeepHashing, self).__init__()
+        super().__init__()
         self.cn1 = nn.Conv2d(3, 20, kernel_size=3)
         nn.init.kaiming_normal_(self.cn1.weight)
         self.bn1 = nn.BatchNorm2d(20)
@@ -99,7 +99,7 @@ class Merge(nn.Module):
     https://www.ijcai.org/proceedings/2017/0315.pdf
     '''
     def __init__(self):
-        super(Merge, self).__init__()
+        super().__init__()
 
     def forward(self, X1, X2):
         X1, X2 = self._flatten(X1), self._flatten(X2)
@@ -120,7 +120,7 @@ class DivideEncode(nn.Module):
     https://arxiv.org/pdf/1504.03410.pdf
     '''
     def __init__(self, num_inputs, num_per_group):
-        super(DivideEncode, self).__init__()
+        super().__init__()
         assert num_inputs % num_per_group == 0, \
             "num_per_group should be divisible by num_inputs."
         self.num_groups = num_inputs // num_per_group
@@ -132,8 +132,6 @@ class DivideEncode(nn.Module):
     def forward(self, X):
         X = X.view((-1, self.num_groups, self.num_per_group))
         return X.mul(self.weights).sum(2)
-
-model_class = DiscriminativeDeepHashing
 
 # ==========================
 # Hyperparameters
@@ -217,6 +215,9 @@ loader_test = DataLoader(data_test,
                           batch_size=BATCH_SIZE["test"],
                           shuffle=False,
                           **LOADER_PARAMS)
+
+model = DiscriminativeDeepHashing(hash_dim=HASH_DIM)
+optimizer = optim.Adam(model.parameters(), **OPTIM_PARAMS)
 
 def train(model, loader, optim, logger, **kwargs):
     '''

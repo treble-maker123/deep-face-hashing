@@ -17,9 +17,6 @@ from logger import *
 from eval_perf import *
 from predict import *
 
-# from ddh import *
-# from ddh2 import *
-from ddh3 import *
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
@@ -30,10 +27,15 @@ else:
 # ignore all of the "invalid value encountered in true_divide" errors
 np.seterr(divide='ignore', invalid='ignore')
 
-model = model_class(hash_dim=HASH_DIM)
-model = model.to(device=device)
+# ==================================
+# PARAMETERS
+# ==================================
+WRITE_TO_FILE = False
 
-optimizer = optim.Adam(model.parameters(), **OPTIM_PARAMS)
+# from ddh import *
+# from ddh2 import *
+from ddh3 import *
+
 
 run_id = uuid.uuid4().hex.upper()[0:6]
 now = datetime.now().strftime("%m-%d_%H-%M-%S")
@@ -63,7 +65,7 @@ stats = {
     "test_rec_curve": None,
 }
 
-with Logger(write_to_file=False, file_name=file_name) as logger:
+with Logger(write_to_file=WRITE_TO_FILE, file_name=file_name) as logger:
     logger.write(
         "Starting run {} for {} epochs with model {}, and following params"
             .format(run_id, NUM_EPOCHS, type(model).__name__))

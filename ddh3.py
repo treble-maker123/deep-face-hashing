@@ -222,14 +222,15 @@ def train(model, loader, optim, logger, **kwargs):
         half_size = len(X) // 2 if len(X) < half_size else half_size
         X1 = X[:half_size].float().to(device=device)
         X2 = X[half_size:].float().to(device=device)
+        y1 = y[:half_size].long().to(device=device)
+        y2 = y[half_size:].long().to(device=device)
         with torch.no_grad():
             if len(X2) > len(X1):
                 # get rid of the last row
                 X2 = X2[:-1]
+                y2 = y2[:-1]
 
         # figure out the ground truth table
-        y1 = y[:half_size].long().to(device=device)
-        y2 = y[half_size:].long().to(device=device)
         y1_gt = y1[None, :].repeat(half_size, 1)
         y2_gt = y2[:, None].repeat(1, half_size)
         # 1 for similar pairs, 0 for dissimilar pairs

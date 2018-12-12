@@ -238,7 +238,8 @@ def train(model, loader, optim, logger, **kwargs):
         y1_gt = y1[None, :].repeat(half_size, 1)
         y2_gt = y2[:, None].repeat(1, half_size)
         # 1 for similar pairs, 0 for dissimilar pairs
-        gt = (y1_gt == y2_gt).float()
+        sim_gt = (y1_gt == y2_gt).float()
+        dissim_gt = (1 - sim_gt)
 
         C1, _ = model(X1)
         C2, _ = model(X2)
@@ -246,13 +247,13 @@ def train(model, loader, optim, logger, **kwargs):
         l2_dist = ((C1[:, None, :] - C2) ** 2 + 1e-8).sum(dim=2).sqrt()
         # set_trace()
         # minimize l2_dist for similar pairs (gt at i, j == 1)
-        similar_loss = (gt * l2_dist).sum()
+        similar_loss = (sim_gt * l2_dist).sum() / (sim_gt + 1)
         # maximize l2_dist for dissimilar pairs
         threshold = F.leaky_relu(mu - l2_dist,
                                  negative_slope=CUSTOM_PARAMS['gamma'])
-        dissimilar_loss = ((1 - gt) * threshold).sum()
+        dissimilar_loss = ((1 - sim_gt) * threshold).sum() / (dissim_gt + 1)
         # similarity loss
-        sim_loss = (1/2 * similar_loss + 1/2 * dissimilar_loss)
+        sim_loss = similar_loss + dissimilar_loss
         # quantization loss
         quant_loss = alpha * \
                         ((C1.abs() - 1).abs() + ((C2.abs() - 1)).abs()).sum()

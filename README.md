@@ -36,3 +36,5 @@ Run `source activate cs670project` to activate project conda environment.
 3. `git clone https://github.com/faceteam/facescrub.git` into the same level as the project's path (see file structure above),
 4. Run `python download.py` with Python 2.7 to download the FaceScrub images,
 5. Run `python utils.py` to preprocess the images and move them into the project's ./data folder,
+
+- To run on a specific CUDA device, run `python run.py CUDA_VISIBLE_DEVICES=#` where # is the number of the device in `nvidia-smi`.

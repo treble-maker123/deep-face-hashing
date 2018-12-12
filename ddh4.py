@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 
 from dataset import *
 
-class DDH3(nn.Module):
+class DDH4(nn.Module):
     '''
     # ==========================================================================
     # Discriminative Deep Hashing for Scalable Face Image Retrieval
@@ -47,7 +47,7 @@ class DDH3(nn.Module):
     # https://arxiv.org/pdf/1504.03410.pdf
     # ==========================================================================
     '''
-    def __init__(self, hash_dim=48, split_num=10):
+    def __init__(self, hash_dim=48, split_num=10, num_classes=530):
         super().__init__()
         self.cn1 = nn.Conv2d(3, 20, kernel_size=3)
         nn.init.kaiming_normal_(self.cn1.weight)
@@ -71,11 +71,11 @@ class DDH3(nn.Module):
         # merge layer
         self.mg1 = Merge()
         self.fc1 = nn.Linear(29180, hash_dim*split_num)
-        nn.init.kaiming_normal_(self.fc1.weight)
-        self.bn5 = nn.BatchNorm2d(hash_dim*split_num)
 
         # hash layer
-        self.fc2 = nn.Linear(hash_dim*split_num, hash_dim)
+        self.de1 = DivideEncode(hash_dim*split_num, split_num)
+
+        self.fc2 = nn.Linear(hash_dim, num_classes)
 
     def forward(self, X):
         l1 = self.mp1(F.relu(self.bn1(self.cn1(X))))
@@ -87,8 +87,9 @@ class DDH3(nn.Module):
         # face feature layer
         l6 = F.relu(self.fc1(l5))
         # divide and encode
-        codes = self.fc2(l6)
-        return torch.tanh(codes), None
+        codes = self.de1(l6)
+        scores = self.fc2(codes)
+        return codes, scores
 
 class Merge(nn.Module):
     '''
@@ -98,7 +99,7 @@ class Merge(nn.Module):
     https://www.ijcai.org/proceedings/2017/0315.pdf
     '''
     def __init__(self):
-        super(Merge, self).__init__()
+        super().__init__()
 
     def forward(self, X1, X2):
         X1, X2 = self._flatten(X1), self._flatten(X2)
@@ -110,6 +111,27 @@ class Merge(nn.Module):
 
     def _merge(self, X1, X2):
         return torch.cat((X1, X2), 1)
+
+class DivideEncode(nn.Module):
+    '''
+    Implementation of the divide-and-encode module in,
+
+    Simultaneous Feature Learning and Hash Coding with Deep Neural Networks
+    https://arxiv.org/pdf/1504.03410.pdf
+    '''
+    def __init__(self, num_inputs, num_per_group):
+        super().__init__()
+        assert num_inputs % num_per_group == 0, \
+            "num_per_group should be divisible by num_inputs."
+        self.num_groups = num_inputs // num_per_group
+        self.num_per_group = num_per_group
+        weights_dim = (self.num_groups, self.num_per_group)
+        self.weights = nn.Parameter(torch.empty(weights_dim))
+        nn.init.xavier_normal_(self.weights)
+
+    def forward(self, X):
+        X = X.view((-1, self.num_groups, self.num_per_group))
+        return X.mul(self.weights).sum(2)
 
 # ==========================
 # Hyperparameters
@@ -126,22 +148,22 @@ TOP_K = 50
 # optimizer parameters
 OPTIM_PARAMS = {
     "lr": 1e-2,
-    "weight_decay": 2e-4
+    "weight_decay":2e-4
 }
 CUSTOM_PARAMS = {
-    "dist_threshold": 6, # distance threshold
-    "alpha": 1e-10, # quantization error
-    "print_iter": 1, # print every n iterations
+    "alpha": 0.001, # quantization loss regularizer
+    "print_iter": 20, # print every n iterations
     "eps": 1e-8, # term added to l2_distance
     "gamma": 1e-3, # negative slope when calculating threshold
+    "dist_threshold": 6, # distance threshold
     "img_size": 128
 }
 BATCH_SIZE = {
-    # "train": 512,
-    "train": 32,
+    # "train": 32,
+    "train": 256,
     "gallery": 128,
-    "val": 512,
-    "test": 512
+    "val": 256,
+    "test": 256
 }
 LOADER_PARAMS = {
     "num_workers": multiprocessing.cpu_count() - 2,
@@ -199,7 +221,7 @@ loader_test = DataLoader(data_test,
                           shuffle=False,
                           **LOADER_PARAMS)
 
-model_class = DDH3
+model_class = DDH4
 model = model_class(hash_dim=HASH_DIM)
 optimizer = optim.Adam(model.parameters(), **OPTIM_PARAMS)
 
@@ -208,67 +230,62 @@ def train(model, loader, optim, logger, **kwargs):
     Train for one epoch.
     '''
     device = kwargs.get("device", torch.device("cpu"))
-    print_iter = kwargs.get("print_iter", 40)
+    print_iter = kwargs.get("print_iter", CUSTOM_PARAMS['print_iter'])
     # the distance threshold above which the dissimilar pairs will contribute 0
     # to loss.
     mu = kwargs.get("dist_threshold", 2)
-    # quantization loss regularizer
-    alpha = kwargs.get("alpha", 0.01)
 
     model.to(device=device)
     # set model to train mode
     model.train()
+    quant_losses = []
+    score_losses = []
 
     for num_iter, (X, y) in enumerate(loader):
         optim.zero_grad()
 
-        half_size = BATCH_SIZE["train"] // 2
-        half_size = len(X) // 2 if len(X) < half_size else half_size
-        X1 = X[:half_size].float().to(device=device)
-        X2 = X[half_size:].float().to(device=device)
-        y1 = y[:half_size].long().to(device=device)
-        y2 = y[half_size:].long().to(device=device)
+        X = X.to(device).float()
+        y = y.to(device).long()
+        codes, scores = model(X)
+
         with torch.no_grad():
-            if len(X2) > len(X1):
-                # get rid of the last row
-                X2 = X2[:-1]
-                y2 = y2[:-1]
+            half_size = BATCH_SIZE["train"] // 2
+            half_size = len(X) // 2 if len(X) < half_size else half_size
 
-        # figure out the ground truth table
-        y1_gt = y1[None, :].repeat(half_size, 1)
-        y2_gt = y2[:, None].repeat(1, half_size)
-        # 1 for similar pairs, 0 for dissimilar pairs
-        sim_gt = (y1_gt == y2_gt).float()
-        dissim_gt = (1 - sim_gt)
+        C1, C2 = codes[:half_size], codes[half_size:]
+        y1, y2 = y[:half_size][None, :], y[half_size:][:, None]
+        y1, y2 = y1.repeat(half_size, 1), y2.repeat(1, half_size)
 
-        C1, _ = model(X1)
-        C2, _ = model(X2)
+        with torch.no_grad():
+            if len(C2) > len(C1):
+                C2, y2 = C2[:-1], y2[:-1]
 
+        sim_gt = (y1 == y2).float()
+        diff_gt = 1 - sim_gt
+
+        # recall loss
         l2_dist = ((C1[:, None, :] - C2) ** 2 + 1e-8).sum(dim=2).sqrt()
-        # minimize l2_dist for similar pairs (gt at i, j == 1)
-        similar_loss = (sim_gt * l2_dist).sum()
-        similar_loss /= (sim_gt + 1).sum()
-        # maximize l2_dist for dissimilar pairs
+        sim_loss = (sim_gt * l2_dist).sum()
+        sim_loss /= (sim_gt + 1).sum()
         threshold = F.leaky_relu(mu - l2_dist,
                                  negative_slope=CUSTOM_PARAMS['gamma'])
-        dissimilar_loss = ((1 - sim_gt) * threshold).sum()
-        dissimilar_loss /= (dissim_gt.sum() + 1)
-        # similarity loss
-        sim_loss = similar_loss + dissimilar_loss
+        diff_loss = ((1 - sim_gt) * threshold).sum()
+        diff_loss /= (diff_loss.sum() + 1)
         # quantization loss
-        quant_loss = alpha * \
-                        ((C1.abs() - 1).abs() + ((C2.abs() - 1)).abs()).sum()
-        set_trace()
-        # total_loss
-        loss = sim_loss + quant_loss
-        # back-propagate
+        quant_loss = CUSTOM_PARAMS['alpha'] * (codes.abs() - 1).abs().mean()
+        # score error
+        score_loss = F.cross_entropy(scores, y)
+        # total loss
+        loss = quant_loss + score_loss + sim_loss + diff_loss
         loss.backward()
         # apply gradient
         optim.step()
+        # save the lossses
+        quant_losses.append(quant_loss.item())
+        score_losses.append(score_loss.item())
 
         if (num_iter+1) % print_iter == 0:
             logger.write(
-                "iter {}/{} ".format(num_iter+1, len(loader)) +
-                "- quant loss: {:.4f}, sim loss: {:.4f}, dissim loss: {:.4f}"
-                    .format(quant_loss.item(), similar_loss.item(),
-                            dissimilar_loss.item()))
+                "iter {} ".format(num_iter+1) +
+                "- quant loss: {:.4f}, score loss: {:.4f}, sim loss: {:.4f}, diff loss: {:.4f}"
+                    .format(quant_loss.item(), score_loss.item(), sim_loss.item(), diff_loss.item()))

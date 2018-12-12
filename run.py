@@ -30,7 +30,7 @@ np.seterr(divide='ignore', invalid='ignore')
 # ==================================
 # PARAMETERS
 # ==================================
-WRITE_TO_FILE = False
+WRITE_TO_FILE = True
 
 # from ddh import *
 # from ddh2 import *

@@ -137,8 +137,8 @@ CUSTOM_PARAMS = {
     "img_size": 128
 }
 BATCH_SIZE = {
-    # "train": 512,
-    "train": 32,
+    "train": 512,
+    # "train": 32,
     "gallery": 128,
     "val": 512,
     "test": 512

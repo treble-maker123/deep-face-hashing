@@ -130,7 +130,7 @@ OPTIM_PARAMS = {
 }
 CUSTOM_PARAMS = {
     "dist_threshold": 6, # distance threshold
-    "alpha": 1e-3, # quantization error
+    "alpha": 1e-10, # quantization error
     "print_iter": 1, # print every n iterations
     "eps": 1e-8, # term added to l2_distance
     "gamma": -1e-3, # negative slope when calculating threshold
@@ -269,5 +269,6 @@ def train(model, loader, optim, logger, **kwargs):
         if (num_iter+1) % print_iter == 0:
             logger.write(
                 "iter {}/{} ".format(num_iter+1, len(loader)) +
-                "- quant loss: {:.8f}, similiarity loss: {:.4f}"
-                    .format(quant_loss.item(), sim_loss.item()))
+                "- quant loss: {:.4f}, sim loss: {:.4f}, dissim loss: {:.4f}"
+                    .format(quant_loss.item(), similar_loss.item(),
+                            dissimilar_loss.item()))

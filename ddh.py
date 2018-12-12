@@ -89,7 +89,7 @@ class DiscriminativeDeepHashing(nn.Module):
         # divide and encode
         codes = self.de1(l6)
         scores = self.fc2(codes)
-        return scores, codes
+        return codes, scores
 
 class Merge(nn.Module):
     '''
@@ -236,7 +236,7 @@ def train(model, loader, optim, logger, **kwargs):
 
         X = X.to(device).float()
         y = y.to(device).long()
-        scores, codes = model(X)
+        codes, scores = model(X)
         # quantization loss
         quant_loss = CUSTOM_PARAMS['beta'] * (codes.abs() - 1).abs().mean()
         # score error

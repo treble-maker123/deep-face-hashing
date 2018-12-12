@@ -18,7 +18,7 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
         logger.write("Hashing {} gallery images..."
                         .format(len(loader_gallery.dataset)))
         for idx, (X, y) in enumerate(loader_gallery):
-            _, gcodes = model(X.to(device=device))
+            gcodes, _ = model(X.to(device=device))
 
             if data[0] is None:
                 data[0] = gcodes
@@ -40,12 +40,12 @@ def predict(model, loader_gallery, loader_test, logger, **kwargs):
         logger.write("Hashing test images and labels...")
         # process the test images
         for idx, (X, y) in enumerate(loader_test):
-            _, gcodes = model(X.to(device=device))
+            tcodes, _ = model(X.to(device=device))
 
             if data[2] is None:
-                data[2] = gcodes
+                data[2] = tcodes
             else:
-                data[2] = torch.cat((data[2], gcodes))
+                data[2] = torch.cat((data[2], tcodes))
 
             if data[3] is None:
                 data[3] = y

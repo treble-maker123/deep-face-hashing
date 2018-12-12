@@ -18,7 +18,8 @@ from eval_perf import *
 from predict import *
 
 # from ddh import *
-from ddh2 import *
+# from ddh2 import *
+from ddh3 import *
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
@@ -48,9 +49,6 @@ stats_path = os.getcwd() + "/stats"
 mkdir(stats_path)
 stats_file_path = stats_path + "/{}.pickle".format(file_name)
 stats = {
-    "quant_losses": [],
-    "score_losses": [],
-
     "val_mean_aps": [],
     "val_avg_pre": [],
     "val_avg_rec": [],
@@ -65,7 +63,7 @@ stats = {
     "test_rec_curve": None,
 }
 
-with Logger(write_to_file=True, file_name=file_name) as logger:
+with Logger(write_to_file=False, file_name=file_name) as logger:
     logger.write(
         "Starting run {} for {} epochs with model {}, and following params"
             .format(run_id, NUM_EPOCHS, type(model).__name__))
@@ -85,10 +83,7 @@ with Logger(write_to_file=True, file_name=file_name) as logger:
         logger.write("--------------")
 
         start = time()
-        quant_loss, score_loss = train(model, loader_train, optimizer, logger,
-                                       device=device)
-        stats['quant_losses'].append(quant_loss)
-        stats['score_losses'].append(score_loss)
+        train(model, loader_train, optimizer, logger, device=device)
         logger.write("Training completed in {:.0f} seconds."
                         .format(time() - start))
         logger.write("")

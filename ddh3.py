@@ -88,7 +88,7 @@ class DDH3(nn.Module):
         l6 = F.relu(self.fc1(l5))
         # divide and encode
         codes = self.fc2(l6)
-        return codes, None
+        return torch.tanh(codes), None
 
 class Merge(nn.Module):
     '''
@@ -131,11 +131,14 @@ OPTIM_PARAMS = {
 CUSTOM_PARAMS = {
     "dist_threshold": 2, # distance threshold
     "alpha": 1e-3, # quantization error
-    "print_iter": 20, # print every n iterations
+    "print_iter": 1, # print every n iterations
+    "eps": 1e-8, # term added to l2_distance
+    "gamma": -1e-3, # negative slope when calculating threshold
     "img_size": 128
 }
 BATCH_SIZE = {
-    "train": 512,
+    # "train": 512,
+    "train": 32,
     "gallery": 128,
     "val": 512,
     "test": 512
@@ -240,11 +243,13 @@ def train(model, loader, optim, logger, **kwargs):
         C1, _ = model(X1)
         C2, _ = model(X2)
 
-        l2_dist = ((C1[:, None, :] - C2) ** 2).sum(dim=2).sqrt()
+        l2_dist = ((C1[:, None, :] - C2) ** 2 + 1e-8).sum(dim=2).sqrt()
+        # set_trace()
         # minimize l2_dist for similar pairs (gt at i, j == 1)
         similar_loss = (gt * l2_dist).sum()
         # maximize l2_dist for dissimilar pairs
-        threshold = torch.max(mu - l2_dist, torch.zeros_like(l2_dist))[0]
+        threshold = F.leaky_relu(mu - l2_dist,
+                                 negative_slope=CUSTOM_PARAMS['gamma'])
         dissimilar_loss = ((1 - gt) * threshold).sum()
         # similarity loss
         sim_loss = (1/2 * similar_loss + 1/2 * dissimilar_loss)

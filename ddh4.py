@@ -266,8 +266,7 @@ def train(model, loader, optim, logger, **kwargs):
         l2_dist = ((C1[:, None, :] - C2) ** 2 + 1e-8).sum(dim=2).sqrt()
         sim_loss = (sim_gt * l2_dist).sum()
         sim_loss /= (sim_gt + 1).sum()
-        threshold = F.leaky_relu(mu - l2_dist,
-                                 negative_slope=CUSTOM_PARAMS['gamma'])
+        threshold = torch.max(mu - l2_dist, torch.zeros_like(l2_dist))
         diff_loss = ((1 - sim_gt) * threshold).sum()
         diff_loss /= (diff_gt.sum() + 1)
         # quantization loss

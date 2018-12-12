@@ -131,14 +131,14 @@ OPTIM_PARAMS = {
 CUSTOM_PARAMS = {
     "dist_threshold": 2, # distance threshold
     "alpha": 1e-2, # quantization error
-    "print_iter": 1, # print every n iterations
+    "print_iter": 50, # print every n iterations
     "img_size": 128
 }
 BATCH_SIZE = {
-    "train": 236,
+    "train": 512,
     "gallery": 128,
-    "val": 256,
-    "test": 256
+    "val": 512,
+    "test": 512
 }
 LOADER_PARAMS = {
     "num_workers": multiprocessing.cpu_count() - 2,
@@ -222,6 +222,10 @@ def train(model, loader, optim, logger, **kwargs):
         half_size = len(X) // 2 if len(X) < half_size else half_size
         X1 = X[:half_size].float().to(device=device)
         X2 = X[half_size:].float().to(device=device)
+        with torch.no_grad():
+            if len(X2) > len(X1):
+                # get rid of the last row
+                X2 = X2[:-1]
 
         # figure out the ground truth table
         y1 = y[:half_size].long().to(device=device)

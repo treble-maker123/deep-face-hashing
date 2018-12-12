@@ -249,8 +249,7 @@ def train(model, loader, optim, logger, **kwargs):
         codes, scores = model(X)
 
         with torch.no_grad():
-            half_size = BATCH_SIZE["train"] // 2
-            half_size = len(X) // 2 if len(X) < half_size else half_size
+            half_size = len(X) // 2
 
         C1, C2 = codes[:half_size], codes[half_size:]
         y1, y2 = y[:half_size][None, :], y[half_size:][:, None]

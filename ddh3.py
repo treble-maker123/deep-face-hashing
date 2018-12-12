@@ -261,7 +261,6 @@ def train(model, loader, optim, logger, **kwargs):
                         ((C1.abs() - 1).abs() + ((C2.abs() - 1)).abs()).sum()
         # total_loss
         loss = sim_loss + quant_loss
-        set_trace()
         # back-propagate
         loss.backward()
         # apply gradient

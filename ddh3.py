@@ -130,8 +130,8 @@ OPTIM_PARAMS = {
 }
 CUSTOM_PARAMS = {
     "dist_threshold": 2, # distance threshold
-    "alpha": 1e-2, # quantization error
-    "print_iter": 50, # print every n iterations
+    "alpha": 1e-3, # quantization error
+    "print_iter": 20, # print every n iterations
     "img_size": 128
 }
 BATCH_SIZE = {

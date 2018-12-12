@@ -270,7 +270,7 @@ def train(model, loader, optim, logger, **kwargs):
         threshold = F.leaky_relu(mu - l2_dist,
                                  negative_slope=CUSTOM_PARAMS['gamma'])
         diff_loss = ((1 - sim_gt) * threshold).sum()
-        diff_loss /= (diff_loss.sum() + 1)
+        diff_loss /= (diff_gt.sum() + 1)
         # quantization loss
         quant_loss = CUSTOM_PARAMS['alpha'] * (codes.abs() - 1).abs().mean()
         # score error

@@ -129,7 +129,7 @@ OPTIM_PARAMS = {
     "weight_decay": 2e-4
 }
 CUSTOM_PARAMS = {
-    "dist_threshold": 2, # distance threshold
+    "dist_threshold": 6, # distance threshold
     "alpha": 1e-3, # quantization error
     "print_iter": 1, # print every n iterations
     "eps": 1e-8, # term added to l2_distance
@@ -247,11 +247,13 @@ def train(model, loader, optim, logger, **kwargs):
         l2_dist = ((C1[:, None, :] - C2) ** 2 + 1e-8).sum(dim=2).sqrt()
         # set_trace()
         # minimize l2_dist for similar pairs (gt at i, j == 1)
-        similar_loss = (sim_gt * l2_dist).sum() / (sim_gt + 1)
+        similar_loss = (sim_gt * l2_dist).sum()
+        similar_loss /= (sim_gt + 1).sum()
         # maximize l2_dist for dissimilar pairs
         threshold = F.leaky_relu(mu - l2_dist,
                                  negative_slope=CUSTOM_PARAMS['gamma'])
-        dissimilar_loss = ((1 - sim_gt) * threshold).sum() / (dissim_gt + 1)
+        dissimilar_loss = ((1 - sim_gt) * threshold).sum()
+        dissimilar_loss /= (dissim_gt.sum() + 1)
         # similarity loss
         sim_loss = similar_loss + dissimilar_loss
         # quantization loss
@@ -259,6 +261,7 @@ def train(model, loader, optim, logger, **kwargs):
                         ((C1.abs() - 1).abs() + ((C2.abs() - 1)).abs()).sum()
         # total_loss
         loss = sim_loss + quant_loss
+        set_trace()
         # back-propagate
         loss.backward()
         # apply gradient

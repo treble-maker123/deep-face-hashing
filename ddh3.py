@@ -86,7 +86,7 @@ class DiscriminativeDeepHashing(nn.Module):
         l6 = F.relu(self.fc1(l5))
         # divide and encode
         codes = self.de1(l6)
-        return codes, None
+        return torch.tanh(codes), None
 
 class Merge(nn.Module):
     '''
@@ -150,18 +150,20 @@ OPTIM_PARAMS = {
     "weight_decay":2e-4
 }
 CUSTOM_PARAMS = {
-    "beta": 1.0, # quantization loss regularizer
+    "dist_threshold": 6, # quantization loss
+    "alpha": 0.01, # distance threshold,
+    "print_iter": 40, # print every n iterations
     "img_size": 128
 }
 BATCH_SIZE = {
-    "train": 128,
+    "train": 512,
     "gallery": 128,
     "val": 256,
     "test": 256
 }
 LOADER_PARAMS = {
-    # "num_workers": multiprocessing.cpu_count() - 2,
-    "num_workers": 1
+    "num_workers": multiprocessing.cpu_count() - 2,
+    # "num_workers": 1
 }
 
 # ==========================
@@ -221,7 +223,7 @@ def train(model, loader, optim, logger, **kwargs):
     '''
     device = kwargs.get("device", torch.device("cpu"))
     print_iter = kwargs.get("print_iter", 40)
-    # the distance threshold above which the dissimilar pair will contribute 0
+    # the distance threshold above which the dissimilar pairs will contribute 0
     # to loss.
     mu = kwargs.get("dist_threshold", 6)
     # quantization loss regularizer
@@ -234,14 +236,14 @@ def train(model, loader, optim, logger, **kwargs):
     for num_iter, (X, y) in enumerate(loader):
         optim.zero_grad()
 
-        half_size = BATCH_SIZE["train"]//2
+        half_size = BATCH_SIZE["train"] // 2
         half_size = len(X) // 2 if len(X) < half_size else half_size
         X1 = X[:half_size].float().to(device=device)
         X2 = X[half_size:].float().to(device=device)
 
         # figure out the ground truth table
-        y1 = y[:half_size].long()
-        y2 = y[half_size:].long()
+        y1 = y[:half_size].long().to(device=device)
+        y2 = y[half_size:].long().to(device=device)
         y1_gt = y1[None, :].repeat(half_size, 1)
         y2_gt = y2[:, None].repeat(1, half_size)
         # 1 for similar pairs, 0 for dissimilar pairs
@@ -253,7 +255,8 @@ def train(model, loader, optim, logger, **kwargs):
         # minimize l2_dist for similar pairs (gt at i, j == 1)
         similar_loss = (gt * l2_dist).sum()
         # maximize l2_dist for dissimilar pairs
-        dissimilar_loss = ((1 - gt) * torch.max(mu - l2_dist, 0)[0]).sum()
+        threshold = torch.max(mu - l2_dist, torch.zeros_like(l2_dist))[0]
+        dissimilar_loss = ((1 - gt) * threshold).sum()
         # similarity loss
         sim_loss = similar_loss + dissimilar_loss
         # quantization loss

@@ -83,7 +83,9 @@ with Logger(write_to_file=False, file_name=file_name) as logger:
         logger.write("--------------")
 
         start = time()
-        train(model, loader_train, optimizer, logger, device=device)
+        train(model, loader_train, optimizer, logger,
+                device=device,
+                **CUSTOM_PARAMS)
         logger.write("Training completed in {:.0f} seconds."
                         .format(time() - start))
         logger.write("")

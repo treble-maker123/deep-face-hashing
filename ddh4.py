@@ -17,7 +17,7 @@ class DDH4(nn.Module):
     # https://www.ijcai.org/proceedings/2017/0315.pdf
     # ==========================================================================
 
-    Image resized to 32x32, batch size of 256
+    Introduced distance loss metrics.
 
     Conv1 = 3x3 kernel, 1 stride, 20 dim (output 31x31)
     Batch
@@ -151,16 +151,17 @@ OPTIM_PARAMS = {
     "weight_decay":2e-4
 }
 CUSTOM_PARAMS = {
-    "alpha": 0.001, # quantization loss regularizer
+    "alpha": 0.0001, # quantization loss regularizer
+    "beta": 1.0, # score loss regularizer
+    "gamma": 0.0001, # distance loss regularizer
+    "mu": 6, # threshold for distance contribution to loss
     "print_iter": 20, # print every n iterations
-    "eps": 1e-8, # term added to l2_distance
-    "gamma": 1e-3, # negative slope when calculating threshold
     "dist_threshold": 6, # distance threshold
     "img_size": 128
 }
 BATCH_SIZE = {
-    # "train": 32,
-    "train": 256,
+    "train": 32,
+    # "train": 256,
     "gallery": 128,
     "val": 256,
     "test": 256
@@ -231,9 +232,6 @@ def train(model, loader, optim, logger, **kwargs):
     '''
     device = kwargs.get("device", torch.device("cpu"))
     print_iter = kwargs.get("print_iter", CUSTOM_PARAMS['print_iter'])
-    # the distance threshold above which the dissimilar pairs will contribute 0
-    # to loss.
-    mu = kwargs.get("dist_threshold", 2)
 
     model.to(device=device)
     # set model to train mode
@@ -262,19 +260,23 @@ def train(model, loader, optim, logger, **kwargs):
         sim_gt = (y1 == y2).float()
         diff_gt = 1 - sim_gt
 
-        # recall loss
+        # distance loss
         l2_dist = ((C1[:, None, :] - C2) ** 2 + 1e-8).sum(dim=2).sqrt()
         sim_loss = (sim_gt * l2_dist).sum()
         sim_loss /= (sim_gt + 1).sum()
-        threshold = torch.max(mu - l2_dist, torch.zeros_like(l2_dist))
+        threshold = torch.max(CUSTOM_PARAMS['mu'] - l2_dist,
+                              torch.zeros_like(l2_dist))
         diff_loss = ((1 - sim_gt) * threshold).sum()
         diff_loss /= (diff_gt.sum() + 1)
+        dist_loss = sim_loss + diff_loss
         # quantization loss
-        quant_loss = CUSTOM_PARAMS['alpha'] * (codes.abs() - 1).abs().mean()
+        quant_loss = (codes.abs() - 1).abs().mean()
         # score error
         score_loss = F.cross_entropy(scores, y)
         # total loss
-        loss = quant_loss + score_loss + sim_loss + diff_loss
+        loss = CUSTOM_PARAMS['alpha'] * quant_loss + \
+               CUSTOM_PARAMS['beta'] * score_loss + \
+               CUSTOM_PARAMS['gamma'] * dist_loss
         loss.backward()
         # apply gradient
         optim.step()

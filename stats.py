@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 STATS_PATH = "./stats"
-FILE_NAME = "/12-08_09-51-15_3F53AE.pickle"
+FILE_NAME = "/12-12_20-32-40_E0C5FA.pickle"
 
 def visualize_val_stats(stats):
     val_mean_aps = np.array(stats['val_mean_aps'])
@@ -58,5 +58,5 @@ if __name__ == "__main__":
     with open(STATS_PATH + FILE_NAME, "rb") as file:
         stats = pickle.load(file)
 
-    # visualize_val_stats(stats)
-    visualize_test_stats(stats)
+    visualize_val_stats(stats)
+    # visualize_test_stats(stats)

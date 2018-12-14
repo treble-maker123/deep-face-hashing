@@ -32,12 +32,50 @@ np.seterr(divide='ignore', invalid='ignore')
 # ==================================
 WRITE_TO_FILE = False
 
+# whether to load from an intermediate point.
+LOAD_SAVED = True
+# required
+SAVED_MODEL_PATH = "./saved_models/12-12_15-26-28_FADE57.pt"
+RUN_ID = "FADE57"
+# optional
+SAVED_STATS_PATH = None
+
 # from ddh import *
 # from ddh2 import *
 # from ddh3 import *
 from ddh4 import *
 
-run_id = uuid.uuid4().hex.upper()[0:6]
+if LOAD_SAVED and SAVED_MODEL_PATH:
+    print("Loading existing model...")
+    model.load_state_dict(torch.load(SAVED_MODEL_PATH))
+
+    if SAVED_STATS_PATH:
+        print("Loading existing stats...")
+        with open(SAVED_STATS_PATH, "rb") as file:
+            stats = pickle.load(file)
+
+if not SAVED_STATS_PATH:
+    print("Creating new stats...")
+    stats = {
+        "val_mean_aps": [],
+        "val_avg_pre": [],
+        "val_avg_rec": [],
+        "val_avg_hmean": [],
+        "highest_hmean": 0.0,
+
+        "test_avg_pre": 0.0,
+        "test_avg_rec": 0.0,
+        "test_avg_hmean": 0.0,
+        "test_mean_ap": 0.0,
+        "test_pre_curve": None,
+        "test_rec_curve": None,
+    }
+
+if RUN_ID:
+    run_id = RUN_ID
+else:
+    run_id = uuid.uuid4().hex.upper()[0:6]
+
 now = datetime.now().strftime("%m-%d_%H-%M-%S")
 file_name = now + "_" + run_id
 # model checkpoint
@@ -50,20 +88,6 @@ checkpoint_path = saved_models_path + "/{}.pt" \
 stats_path = os.getcwd() + "/stats"
 mkdir(stats_path)
 stats_file_path = stats_path + "/{}.pickle".format(file_name)
-stats = {
-    "val_mean_aps": [],
-    "val_avg_pre": [],
-    "val_avg_rec": [],
-    "val_avg_hmean": [],
-    "highest_hmean": 0.0,
-
-    "test_avg_pre": 0.0,
-    "test_avg_rec": 0.0,
-    "test_avg_hmean": 0.0,
-    "test_mean_ap": 0.0,
-    "test_pre_curve": None,
-    "test_rec_curve": None,
-}
 
 with Logger(write_to_file=WRITE_TO_FILE, file_name=file_name) as logger:
     logger.write(

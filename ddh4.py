@@ -138,7 +138,7 @@ class DivideEncode(nn.Module):
 # ==========================
 
 # number of epochs to train
-NUM_EPOCHS = 20
+NUM_EPOCHS = 100
 # the number of hash bits in the output
 HASH_DIM = 48
 # the distance to use for calculating precision/recall
@@ -273,6 +273,14 @@ def train(model, loader, optim, logger, **kwargs):
         quant_loss = (codes.abs() - 1).abs().mean()
         # score error
         score_loss = F.cross_entropy(scores, y)
+        # slowly increase alpha and gamma weights
+        offset_iter = num_iter + 1
+        if offset_iter == 30:
+            CUSTOM_PARAMS['alpha'] *= 10
+            CUSTOM_PARAMS['gamma'] *= 10
+        if offset_iter > 30 and num_iter % 5 == 0:
+            CUSTOM_PARAMS['alpha'] *= 2
+            CUSTOM_PARAMS['gamma'] *= 2
         # total loss
         loss = CUSTOM_PARAMS['alpha'] * quant_loss + \
                CUSTOM_PARAMS['beta'] * score_loss + \

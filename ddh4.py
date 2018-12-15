@@ -275,10 +275,10 @@ def train(model, loader, optim, logger, **kwargs):
         score_loss = F.cross_entropy(scores, y)
         # slowly increase alpha and gamma weights
         offset_iter = num_iter + 1
-        if offset_iter == 30:
+        if offset_iter == 20:
             CUSTOM_PARAMS['alpha'] *= 10
             CUSTOM_PARAMS['gamma'] *= 10
-        if offset_iter > 30 and num_iter % 5 == 0:
+        if offset_iter > 20 and num_iter % 10 == 0:
             CUSTOM_PARAMS['alpha'] *= 2
             CUSTOM_PARAMS['gamma'] *= 2
         # total loss

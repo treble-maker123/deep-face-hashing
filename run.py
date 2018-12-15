@@ -30,20 +30,20 @@ np.seterr(divide='ignore', invalid='ignore')
 # ==================================
 # PARAMETERS
 # ==================================
-WRITE_TO_FILE = False
+WRITE_TO_FILE = True
 
 # whether to load from an intermediate point.
 LOAD_SAVED = False
 # required
-SAVED_MODEL_PATH = "./saved_models/12-12_15-26-28_FADE57.pt"
-RUN_ID = "FADE57"
+SAVED_MODEL_PATH = "./saved_models/12-15_16-57-52_FADE57.pt"
+RUN_ID = None
 # optional
 SAVED_STATS_PATH = None
 
-# from ddh import *
+from ddh import *
 # from ddh2 import *
 # from ddh3 import *
-from ddh4 import *
+# from ddh4 import *
 
 if LOAD_SAVED and SAVED_MODEL_PATH:
     print("Loading existing model...")
@@ -71,7 +71,7 @@ if not LOAD_SAVED or not SAVED_STATS_PATH:
         "test_rec_curve": None,
     }
 
-if RUN_ID:
+if LOAD_SAVED and RUN_ID:
     run_id = RUN_ID
 else:
     run_id = uuid.uuid4().hex.upper()[0:6]

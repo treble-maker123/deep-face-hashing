@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 
 from dataset import *
 
-class DiscriminativeDeepHashing(nn.Module):
+class DDH(nn.Module):
     '''
     # ==========================================================================
     # Discriminative Deep Hashing for Scalable Face Image Retrieval
@@ -138,7 +138,7 @@ class DivideEncode(nn.Module):
 # ==========================
 
 # number of epochs to train
-NUM_EPOCHS = 40
+NUM_EPOCHS = 100
 # the number of hash bits in the output
 HASH_DIM = 48
 # the distance to use for calculating precision/recall
@@ -216,7 +216,7 @@ loader_test = DataLoader(data_test,
                           shuffle=False,
                           **LOADER_PARAMS)
 
-model_class = DDH2
+model_class = DDH
 model = model_class(hash_dim=HASH_DIM)
 optimizer = optim.Adam(model.parameters(), **OPTIM_PARAMS)
 

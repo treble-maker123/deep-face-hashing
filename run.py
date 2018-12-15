@@ -33,7 +33,7 @@ np.seterr(divide='ignore', invalid='ignore')
 WRITE_TO_FILE = False
 
 # whether to load from an intermediate point.
-LOAD_SAVED = True
+LOAD_SAVED = False
 # required
 SAVED_MODEL_PATH = "./saved_models/12-12_15-26-28_FADE57.pt"
 RUN_ID = "FADE57"
@@ -54,7 +54,7 @@ if LOAD_SAVED and SAVED_MODEL_PATH:
         with open(SAVED_STATS_PATH, "rb") as file:
             stats = pickle.load(file)
 
-if not SAVED_STATS_PATH:
+if not LOAD_SAVED or not SAVED_STATS_PATH:
     print("Creating new stats...")
     stats = {
         "val_mean_aps": [],

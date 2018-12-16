@@ -277,6 +277,7 @@ def train(model, loader, optim, logger, **kwargs):
         if offset_iter == 20:
             CUSTOM_PARAMS['gamma'] = 0.0001
         if offset_iter > 20 and num_iter % 10 == 0:
+            CUSTOM_PARAMS['alpha'] *= 2
             CUSTOM_PARAMS['gamma'] *= 2
         # total loss
         loss = CUSTOM_PARAMS['alpha'] * quant_loss + \

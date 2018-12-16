@@ -276,9 +276,9 @@ def train(model, loader, optim, logger, **kwargs):
         #     CUSTOM_PARAMS['alpha'] *= 2
         #     CUSTOM_PARAMS['gamma'] *= 2
         # # total loss
-        # loss = CUSTOM_PARAMS['alpha'] * quant_loss + \
-        #        CUSTOM_PARAMS['beta'] * score_loss + \
-        #        CUSTOM_PARAMS['gamma'] * dist_loss
+        loss = CUSTOM_PARAMS['alpha'] * quant_loss + \
+               CUSTOM_PARAMS['beta'] * score_loss + \
+               CUSTOM_PARAMS['gamma'] * dist_loss
         loss.backward()
         # apply gradient
         optim.step()

@@ -153,7 +153,7 @@ OPTIM_PARAMS = {
 CUSTOM_PARAMS = {
     "alpha": 1.0, # quantization loss regularizer
     "beta": 1.0, # score loss regularizer
-    "gamma": 0.001, # distance loss regularizer
+    "gamma": 1.0, # distance loss regularizer
     "mu": 6, # threshold for distance contribution to loss
     "print_iter": 20, # print every n iterations
     "img_size": 128
@@ -265,16 +265,17 @@ def train(model, loader, optim, logger, **kwargs):
         threshold = torch.max(CUSTOM_PARAMS['mu'] - l2_dist,
                               torch.zeros_like(l2_dist))
         diff_loss = ((1 - sim_gt) * threshold).mean()
-        dist_loss = sim_loss + diff_loss
+        # dist_loss = sim_loss + diff_loss
+        dist_loss = diff_loss
         # quantization loss
         quant_loss = (codes.abs() - 1).abs().mean()
         # score error
         score_loss = F.cross_entropy(scores, y)
         # slowly increase alpha and gamma weights
-        offset_iter = num_iter + 1
-        if offset_iter > 20 and num_iter % 10 == 0:
-            CUSTOM_PARAMS['alpha'] *= 2
-            CUSTOM_PARAMS['gamma'] *= 2
+        # offset_iter = num_iter + 1
+        # if offset_iter > 20 and num_iter % 10 == 0:
+        #     CUSTOM_PARAMS['alpha'] *= 2
+        #     CUSTOM_PARAMS['gamma'] *= 2
         # # total loss
         loss = CUSTOM_PARAMS['alpha'] * quant_loss + \
                CUSTOM_PARAMS['beta'] * score_loss + \

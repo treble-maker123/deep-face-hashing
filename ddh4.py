@@ -265,7 +265,7 @@ def train(model, loader, optim, logger, **kwargs):
         threshold = torch.max(CUSTOM_PARAMS['mu'] - l2_dist,
                               torch.zeros_like(l2_dist))
         diff_loss = ((1 - sim_gt) * threshold).mean()
-        dist_loss = 0.05 * sim_loss + 0.95 * diff_loss
+        dist_loss = 0.3 * sim_loss + 1.0 * diff_loss
         # quantization loss
         quant_loss = (codes.abs() - 1).abs().mean()
         # score error

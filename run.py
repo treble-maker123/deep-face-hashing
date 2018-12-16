@@ -40,10 +40,10 @@ RUN_ID = None
 # optional
 SAVED_STATS_PATH = None
 
-from ddh import *
+# from ddh import *
 # from ddh2 import *
 # from ddh3 import *
-# from ddh4 import *
+from ddh4 import *
 
 if LOAD_SAVED and SAVED_MODEL_PATH:
     print("Loading existing model...")

@@ -151,9 +151,9 @@ OPTIM_PARAMS = {
     "weight_decay":2e-4
 }
 CUSTOM_PARAMS = {
-    "alpha": 0.0001, # quantization loss regularizer
+    "alpha": 0.001, # quantization loss regularizer
     "beta": 1.0, # score loss regularizer
-    "gamma": 0.0001, # distance loss regularizer
+    "gamma": 0.0, # distance loss regularizer
     "mu": 6, # threshold for distance contribution to loss
     "print_iter": 20, # print every n iterations
     "img_size": 128
@@ -262,11 +262,11 @@ def train(model, loader, optim, logger, **kwargs):
         # distance loss
         l2_dist = ((C1[:, None, :] - C2) ** 2 + 1e-8).sum(dim=2).sqrt()
         sim_loss = (sim_gt * l2_dist).sum()
-        sim_loss /= (sim_gt + 1).sum()
+        sim_loss /= sim_gt.sum() + 1
         threshold = torch.max(CUSTOM_PARAMS['mu'] - l2_dist,
                               torch.zeros_like(l2_dist))
         diff_loss = ((1 - sim_gt) * threshold).sum()
-        diff_loss /= (diff_gt.sum() + 1)
+        diff_loss /= diff_gt.sum() + 1
         dist_loss = sim_loss + diff_loss
         # quantization loss
         quant_loss = (codes.abs() - 1).abs().mean()
@@ -275,10 +275,8 @@ def train(model, loader, optim, logger, **kwargs):
         # slowly increase alpha and gamma weights
         offset_iter = num_iter + 1
         if offset_iter == 20:
-            CUSTOM_PARAMS['alpha'] *= 10
-            CUSTOM_PARAMS['gamma'] *= 10
+            CUSTOM_PARAMS['gamma'] = 0.0001
         if offset_iter > 20 and num_iter % 10 == 0:
-            CUSTOM_PARAMS['alpha'] *= 2
             CUSTOM_PARAMS['gamma'] *= 2
         # total loss
         loss = CUSTOM_PARAMS['alpha'] * quant_loss + \

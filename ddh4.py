@@ -265,17 +265,11 @@ def train(model, loader, optim, logger, **kwargs):
         threshold = torch.max(CUSTOM_PARAMS['mu'] - l2_dist,
                               torch.zeros_like(l2_dist))
         diff_loss = ((1 - sim_gt) * threshold).mean()
-        # dist_loss = sim_loss + diff_loss
-        dist_loss = diff_loss
+        dist_loss = 0.10 * sim_loss + 0.90 * diff_loss
         # quantization loss
         quant_loss = (codes.abs() - 1).abs().mean()
         # score error
         score_loss = F.cross_entropy(scores, y)
-        # slowly increase alpha and gamma weights
-        # offset_iter = num_iter + 1
-        # if offset_iter > 20 and num_iter % 10 == 0:
-        #     CUSTOM_PARAMS['alpha'] *= 2
-        #     CUSTOM_PARAMS['gamma'] *= 2
         # # total loss
         loss = CUSTOM_PARAMS['alpha'] * quant_loss + \
                CUSTOM_PARAMS['beta'] * score_loss + \

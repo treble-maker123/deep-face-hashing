@@ -154,7 +154,7 @@ CUSTOM_PARAMS = {
     "alpha": 0.0001, # quantization loss regularizer
     "beta": 1.0, # score loss regularizer
     "gamma": 0.0001, # distance loss regularizer
-    "mu": 4, # threshold for distance contribution to loss
+    "mu": 6, # threshold for distance contribution to loss
     "print_iter": 20, # print every n iterations
     "img_size": 128
 }
@@ -260,14 +260,14 @@ def train(model, loader, optim, logger, **kwargs):
         diff_gt = 1 - sim_gt
 
         # distance loss
-        l2_dist = ((C1[:, None, :] - C2) ** 2 + 1e-8).sum(dim=2).sqrt()
+        l2_dist = ((C1[:, None, :] - C2) ** 2 + 1).sum(dim=2).sqrt()
         sim_loss = (sim_gt * l2_dist).sum()
         sim_loss /= (sim_gt + 1).sum()
         threshold = torch.max(CUSTOM_PARAMS['mu'] - l2_dist,
                               torch.zeros_like(l2_dist))
         diff_loss = ((1 - sim_gt) * threshold).sum()
         diff_loss /= (diff_gt.sum() + 1)
-        dist_loss = 2 * sim_loss + diff_loss
+        dist_loss = sim_loss + diff_loss
         # quantization loss
         quant_loss = (codes.abs() - 1).abs().mean()
         # score error

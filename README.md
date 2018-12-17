@@ -21,6 +21,8 @@ Run `source activate cs670project` to activate project conda environment.
 - matplotlib=3.0.1
 - jupyter=1.0.0
 - sklearn=0.20.1 (pip)
+- cmake=3.13.2 (pip)
+- dlib=19.16.0 (pip)
 
 ### Installing Pytorch
 `conda install pytorch torchvision -c pytorch`

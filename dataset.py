@@ -4,8 +4,9 @@ import numpy as np
 from torch.utils.data import Dataset
 import torchvision.transforms as T
 from utils import DATA_DIR, get_data_path, mkdir, lsdir
-from PIL import Image
 from pdb import set_trace
+from align import align
+from matplotlib import pyplot as plt
 import multiprocessing
 
 class FaceScrubDataset(Dataset):
@@ -84,9 +85,17 @@ class FaceScrubDataset(Dataset):
         hash_code is a numpy array of integers of 0s and 1s, mapping the name
         of the peson into Hamming space.
         '''
-        img_path = self.img_paths[index]
-        name = img_path.split("/")[2]
-        return (self._get_img_from_path(img_path), self.names.index(name))
+        img = None
+        while img is None:
+            img_path = self.img_paths[index]
+            name = img_path.split("/")[2]
+            try:
+                img = self._get_img_from_path(img_path)
+                name_idx = self.names.index(name)
+            except Exception as error:
+                img = None
+                index = np.random.randint(0, len(self.img_paths), 1)[0]
+        return (img, name_idx)
 
     def _get_pair_from_index(self, index):
         '''
@@ -131,9 +140,9 @@ class FaceScrubDataset(Dataset):
         '''
         Returns an image and applies the transformations defined in self.transform.
         '''
-        img = Image.open(path)
+        aligned_img = align(path)
         if self.transform is not None:
-            img = self.transform(img)
+            img = self.transform(aligned_img)
         return img
 
 def create_set(mode, num_imgs=5):
@@ -209,8 +218,8 @@ def get_mean_std():
     return means, stds
 
 if __name__ == "__main__":
-    # dataset = FaceScrubDataset()
-    # dataset = FaceScrubDataset(type="label")
+    dataset = FaceScrubDataset()
+    img = dataset[4000]
     # assert_data_split_correct()
 
     # means, stds = get_mean_std()

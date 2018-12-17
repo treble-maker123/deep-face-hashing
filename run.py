@@ -61,7 +61,7 @@ if not LOAD_SAVED or not SAVED_STATS_PATH:
         "val_avg_pre": [],
         "val_avg_rec": [],
         "val_avg_hmean": [],
-        "highest_hmean": 0.0,
+        "highest_map": 0.0,
 
         "test_avg_pre": 0.0,
         "test_avg_rec": 0.0,
@@ -132,13 +132,13 @@ with Logger(write_to_file=WRITE_TO_FILE, file_name=file_name) as logger:
         stats['val_avg_rec'].append(avg_rec)
         stats['val_avg_hmean'].append(avg_hmean)
 
-        if avg_hmean > stats["highest_hmean"]:
+        if mean_ap > stats["highest_map"]:
             logger.write(
-                "Higher harmonic mean {:.8f}/{:.8f}, saving!"
-                    .format(stats["highest_hmean"], avg_hmean))
+                "Higher mean avg precision {:.8f}/{:.8f}, saving!"
+                    .format(stats["highest_map"], mean_ap))
             # saves the state of this model
             torch.save(model.state_dict(), checkpoint_path)
-            stats["highest_hmean"] = avg_hmean
+            stats["highest_map"] = mean_ap
 
         logger.write("Validation completed in {:.0f} seconds."
                         .format(time() - start))

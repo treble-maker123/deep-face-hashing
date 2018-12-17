@@ -8,7 +8,8 @@ from pdb import set_trace
 from align import align
 from matplotlib import pyplot as plt
 import multiprocessing
-import torchvision.transforms.functional as F
+import torchvision.transforms.functional as tF
+from torch.utils.data.dataloader import default_collate
 
 class FaceScrubDataset(Dataset):
     '''
@@ -86,17 +87,15 @@ class FaceScrubDataset(Dataset):
         hash_code is a numpy array of integers of 0s and 1s, mapping the name
         of the peson into Hamming space.
         '''
-        img = None
-        while img is None:
-            img_path = self.img_paths[index]
-            name = img_path.split("/")[2]
-            try:
-                img = self._get_img_from_path(img_path)
-                name_idx = self.names.index(name)
-            except Exception as error:
-                img = None
-                index = np.random.randint(0, len(self.img_paths), 1)[0]
-        return (img, name_idx)
+        img_path = self.img_paths[index]
+        name = img_path.split("/")[2]
+        try:
+            output = self._get_img_from_path(img_path), self.names.index(name)
+        except Exception as error:
+            # print("Exception countered ({}): {}".format(index, error)) 
+            output = None
+
+        return output
 
     def _get_pair_from_index(self, index):
         '''
@@ -141,10 +140,14 @@ class FaceScrubDataset(Dataset):
         '''
         Returns an image and applies the transformations defined in self.transform.
         '''
-        aligned_img = F.to_pil_image(align(path))
+        aligned_img = tF.to_pil_image(align(path))
         if self.transform is not None:
             img = self.transform(aligned_img)
         return img
+
+def invalid_collate(batch):
+    batch = list(filter(lambda X: X is not None, batch))
+    return default_collate(batch)
 
 def create_set(mode, num_imgs=5):
     '''

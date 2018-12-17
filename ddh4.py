@@ -159,15 +159,16 @@ CUSTOM_PARAMS = {
     "img_size": 128
 }
 BATCH_SIZE = {
-    # "train": 32,
-    "train": 256,
+    "train": 8,
+    # "train": 256,
     "gallery": 128,
     "val": 256,
     "test": 256
 }
 LOADER_PARAMS = {
+    # "num_workers": 0,
     "num_workers": multiprocessing.cpu_count() - 2,
-    # "num_workers": 1
+    "collate_fn": invalid_collate
 }
 
 # ==========================

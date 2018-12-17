@@ -138,7 +138,7 @@ class DivideEncode(nn.Module):
 # ==========================
 
 # number of epochs to train
-NUM_EPOCHS = 100
+NUM_EPOCHS = 60
 # the number of hash bits in the output
 HASH_DIM = 48
 # the distance to use for calculating precision/recall

@@ -8,6 +8,7 @@ from pdb import set_trace
 from align import align
 from matplotlib import pyplot as plt
 import multiprocessing
+import torchvision.transforms.functional as F
 
 class FaceScrubDataset(Dataset):
     '''
@@ -140,7 +141,7 @@ class FaceScrubDataset(Dataset):
         '''
         Returns an image and applies the transformations defined in self.transform.
         '''
-        aligned_img = align(path)
+        aligned_img = F.to_pil_image(align(path))
         if self.transform is not None:
             img = self.transform(aligned_img)
         return img
@@ -218,7 +219,11 @@ def get_mean_std():
     return means, stds
 
 if __name__ == "__main__":
-    dataset = FaceScrubDataset()
+    TRANSFORMS = [
+        T.Resize((64, 64)),
+        T.ToTensor()
+    ]
+    dataset = FaceScrubDataset(transform=TRANSFORMS)
     img = dataset[4000]
     # assert_data_split_correct()
 

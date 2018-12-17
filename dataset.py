@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 import multiprocessing
 import torchvision.transforms.functional as tF
 from torch.utils.data.dataloader import default_collate
+from PIL import Image
 
 class FaceScrubDataset(Dataset):
     '''
@@ -42,6 +43,7 @@ class FaceScrubDataset(Dataset):
         if type not in ["label", "comparison"]:
             raise Exception("Invalid dataset type")
 
+        self.align = kwargs.get("align", False)
         self.mode = mode
         self.type = type
         self.names = lsdir(DATA_DIR)
@@ -92,7 +94,7 @@ class FaceScrubDataset(Dataset):
         try:
             output = self._get_img_from_path(img_path), self.names.index(name)
         except Exception as error:
-            # print("Exception countered ({}): {}".format(index, error)) 
+            # print("Exception countered ({}): {}".format(index, error))
             output = None
 
         return output
@@ -140,9 +142,13 @@ class FaceScrubDataset(Dataset):
         '''
         Returns an image and applies the transformations defined in self.transform.
         '''
-        aligned_img = tF.to_pil_image(align(path))
+        if self.align:
+            img = tF.to_pil_image(align(path))
+        else:
+            img = Image.open(path)
+
         if self.transform is not None:
-            img = self.transform(aligned_img)
+            img = self.transform(img)
         return img
 
 def invalid_collate(batch):

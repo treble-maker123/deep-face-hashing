@@ -30,7 +30,7 @@ np.seterr(divide='ignore', invalid='ignore')
 # ==================================
 # PARAMETERS
 # ==================================
-WRITE_TO_FILE = False
+WRITE_TO_FILE = True
 
 # whether to load from an intermediate point.
 LOAD_SAVED = False

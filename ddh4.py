@@ -138,7 +138,7 @@ class DivideEncode(nn.Module):
 # ==========================
 
 # number of epochs to train
-NUM_EPOCHS = 60
+NUM_EPOCHS = 40
 # the number of hash bits in the output
 HASH_DIM = 48
 # the distance to use for calculating precision/recall
@@ -155,19 +155,18 @@ CUSTOM_PARAMS = {
     "beta": 1.0, # score loss regularizer
     "gamma": 1.0, # distance loss regularizer
     "mu": 6, # threshold for distance contribution to loss
-    "print_iter": 20, # print every n iterations
+    "print_iter": 5, # print every n iterations
     "img_size": 128
 }
 BATCH_SIZE = {
-    # "train": 8,
-    "train": 256,
-    "gallery": 128,
-    "val": 256,
-    "test": 256
+    "train": 32,
+    "gallery": 32,
+    "val": 32,
+    "test": 32
 }
 LOADER_PARAMS = {
-    # "num_workers": 0,
-    "num_workers": multiprocessing.cpu_count() - 2,
+    # "num_workers": 4,
+    "num_workers": multiprocessing.cpu_count() - 1,
     "collate_fn": invalid_collate
 }
 
@@ -180,26 +179,26 @@ LOADER_PARAMS = {
 # undo_create_set("test")
 # create_set("val")
 # create_set("test")
-
 TRANSFORMS = [
     T.Resize((CUSTOM_PARAMS['img_size'], CUSTOM_PARAMS['img_size'])),
     T.ToTensor()
 ]
 
-data_train = FaceScrubDataset(type="label",
-                              mode="train",
-                              transform=TRANSFORMS,
-                              hash_dim=HASH_DIM)
+DATASET_PARAMS = {
+    "align": True,
+    "type": "label",
+    "transform": TRANSFORMS,
+    "hash_dim": HASH_DIM
+}
 
-data_val = FaceScrubDataset(type="label",
-                            mode="val",
-                            transform=TRANSFORMS,
-                            hash_dim=HASH_DIM)
+data_train = FaceScrubDataset(mode="train",
+                              **DATASET_PARAMS)
 
-data_test = FaceScrubDataset(type="label",
-                             mode="test",
-                             transform=TRANSFORMS,
-                             hash_dim=HASH_DIM)
+data_val = FaceScrubDataset(mode="val",
+                            **DATASET_PARAMS)
+
+data_test = FaceScrubDataset(mode="test",
+                             **DATASET_PARAMS)
 
 # for training use, shuffling
 loader_train = DataLoader(data_train,
@@ -266,7 +265,7 @@ def train(model, loader, optim, logger, **kwargs):
         threshold = torch.max(CUSTOM_PARAMS['mu'] - l2_dist,
                               torch.zeros_like(l2_dist))
         diff_loss = ((1 - sim_gt) * threshold).mean()
-        dist_loss = 0.05 * sim_loss + 0.95 * diff_loss
+        dist_loss = 0.10 * sim_loss + 0.90 * diff_loss
         # quantization loss
         quant_loss = (codes.abs() - 1).abs().mean()
         # score error

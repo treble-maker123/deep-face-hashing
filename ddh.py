@@ -70,7 +70,7 @@ class DDH(nn.Module):
 
         # merge layer
         self.mg1 = Merge()
-        self.fc1 = nn.Linear(860, hash_dim*split_num)
+        self.fc1 = nn.Linear(29180, hash_dim*split_num)
 
         # hash layer
         self.de1 = DivideEncode(hash_dim*split_num, split_num)
@@ -152,7 +152,7 @@ OPTIM_PARAMS = {
 }
 CUSTOM_PARAMS = {
     "beta": 1.0, # quantization loss regularizer
-    "img_size": 32
+    "img_size": 128
 }
 BATCH_SIZE = {
     "train": 256,

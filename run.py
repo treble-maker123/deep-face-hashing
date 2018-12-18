@@ -40,10 +40,10 @@ RUN_ID = None
 # optional
 SAVED_STATS_PATH = None
 
-from ddh import *
+# from ddh import *
 # from ddh2 import *
 # from ddh3 import *
-# from ddh4 import *
+from ddh4 import *
 
 if LOAD_SAVED and SAVED_MODEL_PATH:
     print("Loading existing model...")
@@ -98,6 +98,7 @@ with Logger(write_to_file=WRITE_TO_FILE, file_name=file_name) as logger:
     logger.write(CUSTOM_PARAMS)
     logger.write(BATCH_SIZE)
     logger.write(LOADER_PARAMS)
+    logger.write(DATASET_PARAMS)
     logger.write("====== START ======")
     logger.write("")
 

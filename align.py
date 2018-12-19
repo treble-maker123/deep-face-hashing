@@ -1,8 +1,10 @@
+import os
 import cv2
 import dlib
 import numpy as np
 from pdb import set_trace
 from matplotlib import pyplot as plt
+from utils import lsdir, mkdir
 
 # From
 # https://www.pyimagesearch.com/2017/04/03/facial-landmarks-dlib-opencv-python/
@@ -64,12 +66,53 @@ def _shape_to_np(shape, dtype="int"):
         coords[i] = (shape.part(i).x, shape.part(i).y)
     return coords
 
+def _align_imgs(img_files, from_path, to_path):
+    counter = 0
+    for img_name in img_files:
+        img_path = from_path + "/" +  img_name
+        aligned_path = to_path + "/" + img_name
+        try:
+            aligned_img = align(img_path)
+            cv2.imwrite(aligned_path,
+                        cv2.cvtColor(aligned_img, cv2.COLOR_RGB2BGR))
+        except Exception as error:
+            pass
+        finally:
+            counter += 1
+    return counter
+
 if __name__ == "__main__":
-    from dataset import FaceScrubDataset
-    dataset = FaceScrubDataset()
-    img_path = dataset.img_paths[4000]
-    img = cv2.imread(img_path)
-    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    output = align(img_path)
-    plt.imshow(output)
-    plt.show()
+    # from dataset import FaceScrubDataset
+    # dataset = FaceScrubDataset()
+    # img_path = dataset.img_paths[4000]
+    # img = cv2.imread(img_path)
+    # rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # output = align(img_path)
+    # plt.imshow(output)
+    # plt.show()
+
+    root_path = "./data"
+    target_path = "./aligned_data"
+    mkdir(target_path)
+    names = lsdir(root_path)
+    counter = 0
+    for name in names:
+        from_path = root_path + "/" + name
+        to_path = target_path + "/" + name
+        mkdir(to_path)
+        # training files
+        img_names = list(filter(lambda x: ".jpg" in x, lsdir(from_path)))
+        counter += _align_imgs(img_names, from_path, to_path)
+        # validation files
+        val_from_path = from_path + "/val"
+        val_to_path = to_path + "/val"
+        mkdir(val_to_path)
+        img_names = lsdir(val_from_path)
+        counter += _align_imgs(img_names, val_from_path, val_to_path)
+        # test files
+        test_from_path = from_path + "/test"
+        test_to_path = to_path + "/test"
+        mkdir(test_to_path)
+        img_names = lsdir(test_from_path)
+        counter += _align_imgs(img_names, test_from_path, test_to_path)
+        print("Aligned {} images.".format(counter))

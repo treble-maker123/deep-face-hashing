@@ -12,6 +12,7 @@ from pdb import set_trace
 # ==============================================================================
 
 DATA_DIR = "./data"
+ALIGNED_DATA_DIR = "./aligned_data"
 FACESCRUB_DIR = "../facescrub"
 RUN_ASSERTS = True
 VERBOSE = False

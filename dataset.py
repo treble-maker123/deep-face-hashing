@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 import torchvision.transforms as T
-from utils import DATA_DIR, get_data_path, mkdir, lsdir
+from utils import DATA_DIR, ALIGNED_DATA_DIR, get_data_path, mkdir, lsdir
 from pdb import set_trace
 from align import align
 from matplotlib import pyplot as plt
@@ -37,16 +37,17 @@ class FaceScrubDataset(Dataset):
         mode = kwargs.get("mode", "train")
         transform = kwargs.get("transform", [])
         normalize = kwargs.get("normalize", False)
+        align = kwargs.get("align", False)
 
         if mode not in ["train", "val", "test"]:
             raise Exception("Invalid dataset mode")
         if type not in ["label", "comparison"]:
             raise Exception("Invalid dataset type")
 
-        self.align = kwargs.get("align", False)
+        self.data_dir = ALIGNED_DATA_DIR if align else DATA_DIR
         self.mode = mode
         self.type = type
-        self.names = lsdir(DATA_DIR)
+        self.names = lsdir(self.data_dir)
         self.img_paths = self._get_all_img_paths()
         self.hash_dim = hash_dim
         self.transform = T.Compose(transform)
@@ -111,7 +112,7 @@ class FaceScrubDataset(Dataset):
         '''
         Return a list of folder paths for all of the people.
         '''
-        return list(map(lambda name: DATA_DIR + "/" + name, self.names))
+        return list(map(lambda name: self.data_dir + "/" + name, self.names))
 
     def _get_all_img_paths(self):
         '''
@@ -124,7 +125,7 @@ class FaceScrubDataset(Dataset):
         '''
         Returns a list of image paths for the given person.
         '''
-        folder = DATA_DIR + "/" + name
+        folder = self.data_dir + "/" + name
 
         if self.mode == "train":
             pass
@@ -142,11 +143,7 @@ class FaceScrubDataset(Dataset):
         '''
         Returns an image and applies the transformations defined in self.transform.
         '''
-        if self.align:
-            img = tF.to_pil_image(align(path))
-        else:
-            img = Image.open(path)
-
+        img = Image.open(path)
         if self.transform is not None:
             img = self.transform(img)
         return img

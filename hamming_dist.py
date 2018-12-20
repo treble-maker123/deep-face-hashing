@@ -15,15 +15,11 @@ def hamming_dist(A, B):
         (numpy.ndarray): array of shape (N, M), where the ith N and jth M is
             the hamming distance between the ith A and jth B.
     '''
-    num_A, num_B = A.shape[0], B.shape[0]
-    result = np.zeros((num_A, num_B), dtype=np.int16)
-
-    for i in range(num_A):
-        diff = np.bitwise_xor(A[i], B)
-        dist = diff.sum(axis=1)
-        result[i] = dist
-
-    return result
+    code_len = A.shape[1]
+    A = (2 * A) - 1
+    B = (2  * B) - 1
+    dists = 0.5 * (code_len - A.dot(B.T))
+    return dists.astype("int")
 
 if __name__ == "__main__":
     A = np.array([[0,1,0],[1,1,0]])

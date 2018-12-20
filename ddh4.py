@@ -138,7 +138,7 @@ class DivideEncode(nn.Module):
 # ==========================
 
 # number of epochs to train
-NUM_EPOCHS = 40
+NUM_EPOCHS = 60
 # the number of hash bits in the output
 HASH_DIM = 48
 # the distance to use for calculating precision/recall
@@ -155,14 +155,14 @@ CUSTOM_PARAMS = {
     "beta": 1.0, # score loss regularizer
     "gamma": 1.0, # distance loss regularizer
     "mu": 6, # threshold for distance contribution to loss
-    "print_iter": 5, # print every n iterations
+    "print_iter": 40, # print every n iterations
     "img_size": 128
 }
 BATCH_SIZE = {
-    "train": 32,
-    "gallery": 32,
-    "val": 32,
-    "test": 32
+    "train": 256,
+    "gallery": 256,
+    "val": 256,
+    "test": 256
 }
 LOADER_PARAMS = {
     # "num_workers": 4,

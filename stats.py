@@ -1,6 +1,8 @@
 import pickle
 import numpy as np
 from matplotlib import pyplot as plt
+from pdb import set_trace
+from scipy.interpolate import make_interp_spline, BSpline
 
 STATS_PATH = "./stats"
 FILE_NAME = "/12-17_21-59-29_E7A1ED.pickle"
@@ -53,10 +55,48 @@ def visualize_test_stats(stats):
     plt.show()
 
 if __name__ == "__main__":
-    stats = None
+    # stats = None
 
-    with open(STATS_PATH + FILE_NAME, "rb") as file:
-        stats = pickle.load(file)
+    # with open(STATS_PATH + FILE_NAME, "rb") as file:
+    #     stats = pickle.load(file)
 
-    visualize_val_stats(stats)
-    visualize_test_stats(stats)
+    # visualize_val_stats(stats)
+    # visualize_test_stats(stats)
+
+    name = [
+        "Low Res Baseline",
+        "High Res Baseline",
+        "L2 Constraint",
+        "Image Alignment"
+    ]
+
+    stat_paths = [
+        "/12-17_20-18-32_99AD3C.pickle",
+        "/12-17_20-25-11_25F03D.pickle",
+        "/12-17_21-59-29_E7A1ED.pickle",
+        "/12-19_14-18-00_CE7872.pickle"
+    ]
+
+    colors = ['r', 'g', 'b', 'y']
+
+    for idx, path in enumerate(stat_paths):
+        with open(STATS_PATH + path, "rb") as file:
+            stats = pickle.load(file)
+        print(stats['test_mean_ap'])
+
+        # val_mean_aps = np.array(stats['val_mean_aps'])
+        # ticks = np.linspace(1, len(val_mean_aps),
+        #                     len(val_mean_aps), dtype="uint8")
+
+        # X = np.linspace(ticks.min(), ticks.max(), 100)
+        # spline = make_interp_spline(ticks, val_mean_aps, k=3)
+        # smooth = spline(X)
+        # # plt.plot(val_mean_aps)
+        # plt.plot(X, smooth, color=colors[idx])
+        # # plt.xticks(np.linspace(1, ticks, ticks // 2, dtype="int8"))
+        # plt.title("TOP 50 MEAN AVERAGE PRECISION")
+        # plt.xlabel("EPOCHS")
+        # plt.ylabel("MAP")
+
+    # plt.legend(name, loc="lower right")
+    # plt.show()
